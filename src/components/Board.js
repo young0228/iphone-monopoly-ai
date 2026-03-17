@@ -3,56 +3,67 @@ import { StyleSheet, Text, View } from 'react-native';
 import { BOARD_POSITIONS, TILES } from '../game/gameData';
 
 const PALETTE = {
-  frame: '#0E1530',
-  boardBg: '#131B35',
-  border: '#34406A',
-  tile: '#1B2547',
-  tileInner: '#202C52',
-  go: '#2A5CFF',
-  special: '#313D63',
-  text: '#E8EEFF',
-  muted: '#A0ADDA',
+  frame: '#0B1125',
+  board: '#111A34',
+  border: '#384773',
+  edgeTile: '#1C294D',
+  topStripe: '#415A9A',
+  rightStripe: '#537D5B',
+  bottomStripe: '#9B6C3F',
+  leftStripe: '#7E4B7E',
+  corner: '#273C78',
+  center: '#0D1530',
+  text: '#EAF0FF',
+  muted: '#A4B2DF',
 };
 
-function tileForGridCell(row, col) {
-  const index = BOARD_POSITIONS.findIndex((pos) => pos.row === row && pos.col === col);
-  return index >= 0 ? TILES[index] : null;
+const BOARD_SIZE = 11;
+const CORNER_INDEXES = new Set([0, 10, 20, 30]);
+
+function tileIndexAt(row, col) {
+  return BOARD_POSITIONS.findIndex((p) => p.row === row && p.col === col);
 }
 
-function isEdge(row, col, size) {
-  return row === 0 || col === 0 || row === size - 1 || col === size - 1;
+function stripeStyle(index) {
+  if (index <= 10) {
+    return styles.topStripe;
+  }
+  if (index <= 20) {
+    return styles.rightStripe;
+  }
+  if (index <= 30) {
+    return styles.bottomStripe;
+  }
+  return styles.leftStripe;
 }
 
 export default function Board({ players }) {
-  const gridSize = 4;
-
   return (
     <View style={styles.frame}>
       <View style={styles.board}>
-        {Array.from({ length: gridSize }).map((_, row) => (
+        {Array.from({ length: BOARD_SIZE }).map((_, row) => (
           <View key={`row-${row}`} style={styles.row}>
-            {Array.from({ length: gridSize }).map((__, col) => {
-              const tile = tileForGridCell(row, col);
+            {Array.from({ length: BOARD_SIZE }).map((__, col) => {
+              const tileIndex = tileIndexAt(row, col);
 
-              if (!tile) {
-                return (
-                  <View key={`empty-${row}-${col}`} style={[styles.cell, styles.centerCell]}>
-                    <Text style={styles.centerText}>CENTER</Text>
-                  </View>
-                );
+              if (tileIndex < 0) {
+                return <View key={`empty-${row}-${col}`} style={styles.centerCell} />;
               }
 
+              const tile = TILES[tileIndex];
               const playersOnTile = players.filter((player) => player.position === tile.id);
-              const styleList = [
-                styles.cell,
-                isEdge(row, col, gridSize) ? styles.edgeCell : styles.innerCell,
-                tile.id === 0 ? styles.goCell : null,
-                tile.type === 'rest' ? styles.specialCell : null,
-              ];
+              const isCorner = CORNER_INDEXES.has(tileIndex);
 
               return (
-                <View key={tile.id} style={styleList}>
-                  <Text numberOfLines={1} style={styles.tileName}>
+                <View
+                  key={tile.id}
+                  style={[
+                    styles.tile,
+                    stripeStyle(tileIndex),
+                    isCorner ? styles.cornerTile : null,
+                  ]}
+                >
+                  <Text numberOfLines={1} style={[styles.tileName, isCorner ? styles.cornerTileName : null]}>
                     {tile.name}
                   </Text>
                   <Text style={styles.tilePrice}>{tile.type === 'property' ? `$${tile.price}` : '•'}</Text>
@@ -79,7 +90,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 10,
     borderWidth: 1,
-    borderColor: '#2A3863',
+    borderColor: '#2A3A69',
   },
   board: {
     width: '100%',
@@ -88,67 +99,68 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 2,
     borderColor: PALETTE.border,
-    backgroundColor: PALETTE.boardBg,
+    backgroundColor: PALETTE.board,
   },
   row: {
     flex: 1,
     flexDirection: 'row',
   },
-  cell: {
+  tile: {
     flex: 1,
-    borderWidth: 1,
+    borderWidth: 0.5,
     borderColor: PALETTE.border,
-    padding: 5,
+    padding: 3,
     justifyContent: 'space-between',
   },
-  edgeCell: {
-    backgroundColor: PALETTE.tile,
+  topStripe: {
+    backgroundColor: PALETTE.topStripe,
   },
-  innerCell: {
-    backgroundColor: PALETTE.tileInner,
+  rightStripe: {
+    backgroundColor: PALETTE.rightStripe,
   },
-  goCell: {
-    backgroundColor: PALETTE.go,
+  bottomStripe: {
+    backgroundColor: PALETTE.bottomStripe,
   },
-  specialCell: {
-    backgroundColor: PALETTE.special,
+  leftStripe: {
+    backgroundColor: PALETTE.leftStripe,
+  },
+  cornerTile: {
+    backgroundColor: PALETTE.corner,
+    borderWidth: 1.4,
   },
   centerCell: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  centerText: {
-    color: PALETTE.muted,
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 1,
+    flex: 1,
+    backgroundColor: PALETTE.center,
   },
   tileName: {
     color: PALETTE.text,
-    fontSize: 10,
+    fontSize: 7,
     fontWeight: '700',
+  },
+  cornerTileName: {
+    fontSize: 8,
   },
   tilePrice: {
     color: PALETTE.muted,
-    fontSize: 10,
+    fontSize: 7,
   },
   tokensWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 3,
+    gap: 1,
   },
   tokenRing: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#0A1126',
-  },
-  tokenCore: {
     width: 8,
     height: 8,
     borderRadius: 4,
+    borderWidth: 1,
+    backgroundColor: '#091022',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tokenCore: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
   },
 });
