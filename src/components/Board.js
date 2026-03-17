@@ -33,7 +33,7 @@ const BOARD_SIZE = 11;
 const CORNER_INDEXES = new Set([0, 10, 20, 30]);
 
 // Larger perimeter proportions for portrait readability.
-const EDGE_WEIGHT = 1.85;
+const EDGE_WEIGHT = 2.25;
 const INNER_WEIGHT = 1;
 const ROW_WEIGHTS = [EDGE_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, EDGE_WEIGHT];
 const COL_WEIGHTS = [EDGE_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, EDGE_WEIGHT];
@@ -132,7 +132,7 @@ export default function Board({ players }) {
 
                     <View style={styles.tileBody}>
                       <View style={styles.tileHeaderRow}>
-                        <Text numberOfLines={2} style={[styles.tileName, isCorner ? styles.cornerName : null]}>
+                        <Text numberOfLines={3} style={[styles.tileName, isCorner ? styles.cornerName : null]}>
                           {tile.name}
                         </Text>
                         {owner ? (
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     marginBottom: 10,
     position: 'relative',
-    transform: [{ scaleY: 0.965 }],
+    transform: [{ scaleY: 0.99 }],
   },
   frameShadow: {
     ...StyleSheet.absoluteFillObject,
@@ -223,8 +223,8 @@ const styles = StyleSheet.create({
     position: 'relative',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.32,
-    shadowRadius: 2.6,
+    shadowOpacity: 0.4,
+    shadowRadius: 3.2,
   },
   propertyTile: {
     backgroundColor: PALETTE.tileProperty,
@@ -234,7 +234,8 @@ const styles = StyleSheet.create({
   },
   cornerTile: {
     backgroundColor: PALETTE.tileCorner,
-    borderWidth: 1.7,
+    borderWidth: 2,
+    transform: [{ scale: 1.1 }],
     zIndex: 30,
     elevation: 16,
     shadowColor: '#000',
@@ -262,9 +263,9 @@ const styles = StyleSheet.create({
   },
   tileBody: {
     flex: 1,
-    paddingHorizontal: 5,
-    paddingTop: 4,
-    paddingBottom: 18,
+    paddingHorizontal: 6,
+    paddingTop: 5,
+    paddingBottom: 20,
     justifyContent: 'space-between',
     gap: 3,
   },
@@ -276,17 +277,17 @@ const styles = StyleSheet.create({
   },
   tileName: {
     color: PALETTE.text,
-    fontSize: 9,
-    lineHeight: 10.6,
+    fontSize: 9.8,
+    lineHeight: 11.5,
     fontWeight: '700',
     flex: 1,
   },
   cornerName: {
-    fontSize: 10,
-    lineHeight: 11.4,
+    fontSize: 11.2,
+    lineHeight: 12.6,
   },
   tilePrice: {
-    fontSize: 8.2,
+    fontSize: 8.8,
     fontWeight: '700',
   },
   propertyPrice: {
@@ -318,25 +319,25 @@ const styles = StyleSheet.create({
     backgroundColor: PALETTE.centerPanel,
     borderWidth: 1,
     borderColor: PALETTE.centerPanelBorder,
-    borderRadius: 18,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 7,
+    shadowOpacity: 0.45,
+    shadowRadius: 10,
+    elevation: 9,
     zIndex: 2,
   },
   centerTitle: {
     color: '#E4EEFF',
-    fontSize: 18,
+    fontSize: 21,
     fontWeight: '800',
     letterSpacing: 2,
   },
   centerSubtitle: {
     color: '#97ABD9',
-    fontSize: 11,
+    fontSize: 12,
     marginTop: 4,
   },
   tokenDock: {
