@@ -10,6 +10,8 @@ const PALETTE = {
   tileSpecial: '#1A2546',
   tileCorner: '#2A3E7B',
   center: '#0E1730',
+  centerPanel: '#16244A',
+  centerPanelBorder: '#314A83',
   text: '#EEF4FF',
   muted: '#B6C3EA',
   specialMuted: '#91A2D2',
@@ -29,6 +31,31 @@ const GROUP_COLORS = {
 
 const BOARD_SIZE = 11;
 const CORNER_INDEXES = new Set([0, 10, 20, 30]);
+
+// Larger perimeter proportions for portrait readability.
+const EDGE_WEIGHT = 1.85;
+const INNER_WEIGHT = 1;
+const ROW_WEIGHTS = [EDGE_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, EDGE_WEIGHT];
+const COL_WEIGHTS = [EDGE_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, EDGE_WEIGHT];
+
+function total(weights) {
+  return weights.reduce((sum, value) => sum + value, 0);
+}
+
+function sumRange(weights, start, endExclusive) {
+  return weights.slice(start, endExclusive).reduce((sum, value) => sum + value, 0);
+}
+
+const ROW_TOTAL = total(ROW_WEIGHTS);
+const COL_TOTAL = total(COL_WEIGHTS);
+
+// Center panel spans inner 9x9 area (rows/cols 1..9).
+const CENTER_PANEL_STYLE = {
+  left: `${(sumRange(COL_WEIGHTS, 0, 1) / COL_TOTAL) * 100}%`,
+  top: `${(sumRange(ROW_WEIGHTS, 0, 1) / ROW_TOTAL) * 100}%`,
+  width: `${(sumRange(COL_WEIGHTS, 1, 10) / COL_TOTAL) * 100}%`,
+  height: `${(sumRange(ROW_WEIGHTS, 1, 10) / ROW_TOTAL) * 100}%`,
+};
 
 function tileIndexAt(row, col) {
   return BOARD_POSITIONS.findIndex((p) => p.row === row && p.col === col);
@@ -64,21 +91,18 @@ export default function Board({ players }) {
       <View style={styles.frameShadow} />
       <View style={styles.frame}>
         <View style={styles.board}>
+          <View style={[styles.centerPanel, CENTER_PANEL_STYLE]}>
+            <Text style={styles.centerTitle}>MONOPOLY</Text>
+            <Text style={styles.centerSubtitle}>iPhone MVP Edition</Text>
+          </View>
+
           {Array.from({ length: BOARD_SIZE }).map((_, row) => (
-            <View key={`row-${row}`} style={styles.row}>
+            <View key={`row-${row}`} style={[styles.row, { flex: ROW_WEIGHTS[row] }]}>
               {Array.from({ length: BOARD_SIZE }).map((__, col) => {
                 const tileIndex = tileIndexAt(row, col);
 
                 if (tileIndex < 0) {
-                  return (
-                    <View key={`empty-${row}-${col}`} style={styles.centerCell}>
-                      {row === 5 && col === 5 ? (
-                        <View style={styles.centerBadge}>
-                          <Text style={styles.centerTitle}>MONOPOLY</Text>
-                        </View>
-                      ) : null}
-                    </View>
-                  );
+                  return <View key={`empty-${row}-${col}`} style={[styles.centerCell, { flex: COL_WEIGHTS[col] }]} />;
                 }
 
                 const tile = TILES[tileIndex];
@@ -93,6 +117,7 @@ export default function Board({ players }) {
                     key={tile.id}
                     style={[
                       styles.tile,
+                      { flex: COL_WEIGHTS[col] },
                       isProperty ? styles.propertyTile : styles.nonPropertyTile,
                       isCorner ? styles.cornerTile : null,
                     ]}
@@ -107,7 +132,7 @@ export default function Board({ players }) {
 
                     <View style={styles.tileBody}>
                       <View style={styles.tileHeaderRow}>
-                        <Text numberOfLines={3} style={[styles.tileName, isCorner ? styles.cornerName : null]}>
+                        <Text numberOfLines={2} style={[styles.tileName, isCorner ? styles.cornerName : null]}>
                           {tile.name}
                         </Text>
                         {owner ? (
@@ -154,17 +179,17 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     marginBottom: 10,
     position: 'relative',
-    transform: [{ scaleY: 0.95 }],
+    transform: [{ scaleY: 0.965 }],
   },
   frameShadow: {
     ...StyleSheet.absoluteFillObject,
-    top: 14,
+    top: 16,
     left: 12,
-    right: -8,
-    bottom: -8,
+    right: -10,
+    bottom: -10,
     borderRadius: 24,
-    backgroundColor: '#060a16',
-    opacity: 0.65,
+    backgroundColor: '#050913',
+    opacity: 0.7,
   },
   frame: {
     flex: 1,
@@ -174,10 +199,10 @@ const styles = StyleSheet.create({
     borderColor: '#2A3A69',
     backgroundColor: PALETTE.frame,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.55,
-    shadowRadius: 10,
-    elevation: 12,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.58,
+    shadowRadius: 12,
+    elevation: 14,
   },
   board: {
     flex: 1,
@@ -186,21 +211,20 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: PALETTE.border,
     backgroundColor: PALETTE.board,
+    position: 'relative',
   },
   row: {
-    flex: 1,
     flexDirection: 'row',
   },
   tile: {
-    flex: 1,
-    borderWidth: 0.8,
-    borderColor: '#4F65A0',
+    borderWidth: 0.9,
+    borderColor: '#5269A6',
     overflow: 'visible',
     position: 'relative',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.28,
-    shadowRadius: 2.4,
+    shadowOpacity: 0.32,
+    shadowRadius: 2.6,
   },
   propertyTile: {
     backgroundColor: PALETTE.tileProperty,
@@ -210,22 +234,21 @@ const styles = StyleSheet.create({
   },
   cornerTile: {
     backgroundColor: PALETTE.tileCorner,
-    borderWidth: 1.6,
-    transform: [{ scale: 1.08 }],
+    borderWidth: 1.7,
     zIndex: 30,
     elevation: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.45,
-    shadowRadius: 4.2,
+    shadowOpacity: 0.46,
+    shadowRadius: 4.4,
   },
   propertyStrip: {
-    height: 7,
+    height: 8,
     borderBottomWidth: 0.8,
     borderBottomColor: '#0a1226',
   },
   nonPropertyHeader: {
-    height: 7,
+    height: 8,
     backgroundColor: '#334675',
     borderBottomWidth: 0.8,
     borderBottomColor: '#0a1226',
@@ -234,36 +257,36 @@ const styles = StyleSheet.create({
   },
   nonPropertyIcon: {
     color: '#E6EEFF',
-    fontSize: 6,
+    fontSize: 6.5,
     fontWeight: '800',
   },
   tileBody: {
     flex: 1,
-    paddingHorizontal: 4,
-    paddingTop: 3,
-    paddingBottom: 17,
+    paddingHorizontal: 5,
+    paddingTop: 4,
+    paddingBottom: 18,
     justifyContent: 'space-between',
-    gap: 2,
+    gap: 3,
   },
   tileHeaderRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    gap: 2,
+    gap: 3,
   },
   tileName: {
     color: PALETTE.text,
-    fontSize: 8.2,
-    lineHeight: 9.6,
+    fontSize: 9,
+    lineHeight: 10.6,
     fontWeight: '700',
     flex: 1,
   },
   cornerName: {
-    fontSize: 9.4,
-    lineHeight: 10.4,
+    fontSize: 10,
+    lineHeight: 11.4,
   },
   tilePrice: {
-    fontSize: 7.6,
+    fontSize: 8.2,
     fontWeight: '700',
   },
   propertyPrice: {
@@ -288,24 +311,33 @@ const styles = StyleSheet.create({
     borderRadius: 2.1,
   },
   centerCell: {
-    flex: 1,
     backgroundColor: PALETTE.center,
   },
-  centerBadge: {
-    alignSelf: 'center',
-    marginTop: 2,
-    backgroundColor: '#121D3B',
-    borderColor: '#2C3E72',
+  centerPanel: {
+    position: 'absolute',
+    backgroundColor: PALETTE.centerPanel,
     borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    borderColor: PALETTE.centerPanelBorder,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 7,
+    zIndex: 2,
   },
   centerTitle: {
-    color: '#D9E6FF',
-    fontSize: 7,
+    color: '#E4EEFF',
+    fontSize: 18,
     fontWeight: '800',
-    letterSpacing: 0.6,
+    letterSpacing: 2,
+  },
+  centerSubtitle: {
+    color: '#97ABD9',
+    fontSize: 11,
+    marginTop: 4,
   },
   tokenDock: {
     position: 'absolute',
@@ -314,34 +346,34 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     zIndex: 20,
-    elevation: 8,
+    elevation: 9,
   },
   tokenShell: {
     position: 'absolute',
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    borderWidth: 1.8,
+    width: 13,
+    height: 13,
+    borderRadius: 6.5,
+    borderWidth: 1.9,
     backgroundColor: '#0A142E',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.5,
-    shadowRadius: 1.6,
+    shadowRadius: 1.8,
   },
   humanTokenShell: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
+    width: 15,
+    height: 15,
+    borderRadius: 7.5,
     shadowColor: '#91BBFF',
     shadowOpacity: 0.95,
-    shadowRadius: 4.2,
+    shadowRadius: 4.4,
     shadowOffset: { width: 0, height: 0 },
   },
   tokenCore: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
+    width: 7.4,
+    height: 7.4,
+    borderRadius: 3.7,
   },
 });
