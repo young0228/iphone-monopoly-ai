@@ -1,8 +1,8 @@
 export const PLAYER_SETUP = [
-  { id: 'human', name: 'You', color: '#2563eb', isAI: false },
-  { id: 'ai-1', name: 'AI 1', color: '#dc2626', isAI: true },
-  { id: 'ai-2', name: 'AI 2', color: '#16a34a', isAI: true },
-  { id: 'ai-3', name: 'AI 3', color: '#ca8a04', isAI: true },
+  { id: 'human', name: 'You', color: '#60A5FA', isAI: false },
+  { id: 'ai-1', name: 'AI 1', color: '#F87171', isAI: true },
+  { id: 'ai-2', name: 'AI 2', color: '#4ADE80', isAI: true },
+  { id: 'ai-3', name: 'AI 3', color: '#FBBF24', isAI: true },
 ];
 
 export const STARTING_CASH = 300;

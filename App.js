@@ -11,6 +11,21 @@ import {
   runAiTurn,
 } from './src/game/gameLogic';
 
+const UI = {
+  bg: '#070B18',
+  panel: '#111935',
+  panelAlt: '#0D1430',
+  border: '#26325B',
+  text: '#EAF0FF',
+  muted: '#9DAAD7',
+  primary: '#4F7CFF',
+  primaryBorder: '#3A64DA',
+  success: '#2FC57A',
+  successBorder: '#24A869',
+  neutral: '#536186',
+  neutralBorder: '#425173',
+};
+
 export default function App() {
   const [players, setPlayers] = useState(createInitialPlayers);
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
@@ -77,50 +92,58 @@ export default function App() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Monopoly MVP</Text>
-        <Text style={styles.subtitle}>You vs 3 simple AI players</Text>
+        <View style={styles.heroCard}>
+          <Text style={styles.title}>Monopoly MVP</Text>
+          <Text style={styles.subtitle}>Single Player • 3 AI Opponents</Text>
+        </View>
 
         <Board players={players} />
 
-        <View style={styles.panel}>
-          <Text style={styles.sectionTitle}>Current Turn: {activePlayer.name}</Text>
-          <Text style={styles.info}>Position: {TILES[activePlayer.position].name}</Text>
-          <Text style={styles.info}>Cash: ${activePlayer.cash}</Text>
+        <View style={styles.infoCard}>
+          <Text style={styles.cardLabel}>Current Turn</Text>
+          <Text style={styles.turnName}>{activePlayer.name}</Text>
+          <View style={styles.statsRow}>
+            <Text style={styles.info}>Tile: {TILES[activePlayer.position].name}</Text>
+            <Text style={styles.info}>Cash: ${activePlayer.cash}</Text>
+          </View>
           <Text style={styles.info}>Last Roll: {lastRoll ?? '-'}</Text>
           <Text style={styles.message}>{statusMessage}</Text>
         </View>
 
-        <View style={styles.buttonsRow}>
+        <View style={styles.buttonsWrap}>
           {!activePlayer.isAI && (
-            <TouchableOpacity style={styles.button} onPress={handleHumanRoll}>
+            <TouchableOpacity style={[styles.buttonBase, styles.primaryButton]} onPress={handleHumanRoll}>
               <Text style={styles.buttonText}>Roll Dice</Text>
             </TouchableOpacity>
           )}
 
           {canBuyCurrentTile && !activePlayer.isAI && (
             <>
-              <TouchableOpacity style={styles.buyButton} onPress={handleBuy}>
+              <TouchableOpacity style={[styles.buttonBase, styles.buyButton]} onPress={handleBuy}>
                 <Text style={styles.buttonText}>Buy Property</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.skipButton} onPress={handleSkipBuy}>
+              <TouchableOpacity style={[styles.buttonBase, styles.skipButton]} onPress={handleSkipBuy}>
                 <Text style={styles.buttonText}>Skip</Text>
               </TouchableOpacity>
             </>
           )}
 
           {(!canBuyCurrentTile || activePlayer.isAI) && (
-            <TouchableOpacity style={styles.button} onPress={handleNextTurn}>
+            <TouchableOpacity style={[styles.buttonBase, styles.primaryButton]} onPress={handleNextTurn}>
               <Text style={styles.buttonText}>{activePlayer.isAI ? 'Run AI Turn' : 'End Turn'}</Text>
             </TouchableOpacity>
           )}
         </View>
 
-        <View style={styles.panel}>
-          <Text style={styles.sectionTitle}>Players</Text>
+        <View style={styles.infoCard}>
+          <Text style={styles.cardLabel}>Players</Text>
           {sortedPlayers.map((player) => (
-            <Text key={player.id} style={styles.info}>
-              {player.name}: ${player.cash} | Properties: {player.properties.length}
-            </Text>
+            <View key={player.id} style={styles.playerRow}>
+              <View style={[styles.playerToken, { backgroundColor: player.color }]} />
+              <Text style={styles.info}>
+                {player.name}: ${player.cash} · {player.properties.length} properties
+              </Text>
+            </View>
           ))}
         </View>
       </ScrollView>
@@ -131,64 +154,101 @@ export default function App() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: UI.bg,
   },
   container: {
     padding: 16,
-    gap: 12,
+    gap: 14,
+  },
+  heroCard: {
+    backgroundColor: UI.panelAlt,
+    borderRadius: 18,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: UI.border,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#0f172a',
+    color: UI.text,
+    fontSize: 30,
+    fontWeight: '800',
   },
   subtitle: {
-    fontSize: 14,
-    color: '#334155',
+    color: UI.muted,
+    fontSize: 13,
+    marginTop: 2,
   },
-  panel: {
-    backgroundColor: '#e2e8f0',
-    borderRadius: 10,
-    padding: 12,
-    gap: 4,
+  infoCard: {
+    backgroundColor: UI.panel,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: UI.border,
+    padding: 14,
+    gap: 5,
   },
-  sectionTitle: {
+  cardLabel: {
+    color: UI.muted,
     fontWeight: '700',
-    fontSize: 16,
-    marginBottom: 4,
+    fontSize: 12,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  turnName: {
+    color: UI.text,
+    fontSize: 21,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
   },
   info: {
-    color: '#1e293b',
+    color: UI.text,
+    fontSize: 14,
   },
   message: {
     marginTop: 8,
-    color: '#0f172a',
+    color: UI.muted,
+    lineHeight: 18,
+    fontSize: 13,
   },
-  buttonsRow: {
+  buttonsWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
   },
-  button: {
-    backgroundColor: '#2563eb',
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
+  buttonBase: {
+    paddingVertical: 11,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  primaryButton: {
+    backgroundColor: UI.primary,
+    borderColor: UI.primaryBorder,
   },
   buyButton: {
-    backgroundColor: '#16a34a',
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
+    backgroundColor: UI.success,
+    borderColor: UI.successBorder,
   },
   skipButton: {
-    backgroundColor: '#64748b',
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
+    backgroundColor: UI.neutral,
+    borderColor: UI.neutralBorder,
   },
   buttonText: {
-    color: '#fff',
-    fontWeight: '600',
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  playerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  playerToken: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
 });
