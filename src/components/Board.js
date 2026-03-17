@@ -1,20 +1,19 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { BOARD_POSITIONS, TILES } from '../game/gameData';
 
 const PALETTE = {
-  frame: '#0B1125',
-  board: '#111A34',
-  border: '#384773',
-  tileBase: '#1A2648',
-  propertyTile: '#202D53',
-  specialTile: '#18223F',
-  corner: '#2A3E7B',
-  center: '#0D1530',
-  text: '#EAF0FF',
-  muted: '#A4B2DF',
-  specialMuted: '#8A9ACB',
-  ownerRingBg: '#081024',
+  frame: '#0A1022',
+  boardGlow: '#1B2A56',
+  boardCore: '#111A34',
+  text: '#F0F5FF',
+  muted: '#B6C3EA',
+  specialMuted: '#8FA0CF',
+  tileProperty: '#24345E',
+  tileSpecial: '#1A2546',
+  tileCorner: '#2A3E7B',
+  edge: '#485A92',
+  ownerRingBg: '#091126',
 };
 
 const GROUP_COLORS = {
@@ -28,12 +27,7 @@ const GROUP_COLORS = {
   darkBlue: '#3E5BFF',
 };
 
-const BOARD_SIZE = 11;
 const CORNER_INDEXES = new Set([0, 10, 20, 30]);
-
-function tileIndexAt(row, col) {
-  return BOARD_POSITIONS.findIndex((p) => p.row === row && p.col === col);
-}
 
 function ownerForTile(tileId, players) {
   return players.find((p) => p.properties.includes(tileId));
@@ -49,220 +43,265 @@ function specialIconForTile(tile) {
   return '•';
 }
 
-function tokenSlotStyle(index) {
+function tokenSlotStyle(index, tokenSize) {
+  const margin = 2;
   const slots = [
-    { top: 1, left: 1 },
-    { top: 1, right: 1 },
-    { bottom: 1, left: 1 },
-    { bottom: 1, right: 1 },
+    { left: margin, top: margin },
+    { right: margin, top: margin },
+    { left: margin, bottom: margin },
+    { right: margin, bottom: margin },
   ];
-  return slots[index] ?? slots[slots.length - 1];
+  return slots[index] ?? { right: margin, bottom: margin + tokenSize * 0.6 };
 }
 
 export default function Board({ players }) {
+  const [size, setSize] = useState(0);
+
+  const layout = useMemo(() => {
+    const safe = Math.max(size, 300);
+    const unit = safe / 11;
+    const regularWidth = unit * 1.32;
+    const regularHeight = unit * 0.88;
+    const cornerWidth = unit * 1.6;
+    const cornerHeight = unit * 1.08;
+    const tokenSize = Math.max(11, unit * 0.38);
+
+    const centerX = safe / 2;
+    const startY = unit * 0.45;
+
+    const tiles = BOARD_POSITIONS.map((pos, index) => {
+      const x = centerX + (pos.col - pos.row) * unit * 0.54;
+      const y = startY + (pos.col + pos.row) * unit * 0.315;
+      const isCorner = CORNER_INDEXES.has(index);
+      const width = isCorner ? cornerWidth : regularWidth;
+      const height = isCorner ? cornerHeight : regularHeight;
+
+      return {
+        index,
+        width,
+        height,
+        left: x - width / 2,
+        top: y - height / 2,
+        zIndex: Math.round(y * 10),
+      };
+    });
+
+    return { tiles, tokenSize };
+  }, [size]);
+
   return (
-    <View style={styles.frame}>
-      <View style={styles.board}>
-        {Array.from({ length: BOARD_SIZE }).map((_, row) => (
-          <View key={`row-${row}`} style={styles.row}>
-            {Array.from({ length: BOARD_SIZE }).map((__, col) => {
-              const tileIndex = tileIndexAt(row, col);
+    <View style={styles.frame} onLayout={(e) => setSize(e.nativeEvent.layout.width)}>
+      <View style={styles.isoBackdrop} />
+      <View style={styles.centerBadge}>
+        <Text style={styles.centerTitle}>MONOPOLY</Text>
+        <Text style={styles.centerSub}>MVP BOARD</Text>
+      </View>
 
-              if (tileIndex < 0) {
-                return <View key={`empty-${row}-${col}`} style={styles.centerCell} />;
-              }
+      {layout.tiles.map((tileLayout) => {
+        const tile = TILES[tileLayout.index];
+        const playersOnTile = players.filter((player) => player.position === tile.id);
+        const isCorner = CORNER_INDEXES.has(tileLayout.index);
+        const isProperty = tile.type === 'property';
+        const owner = ownerForTile(tile.id, players);
+        const groupColor = tile.colorGroup ? GROUP_COLORS[tile.colorGroup] : '#56648A';
 
-              const tile = TILES[tileIndex];
-              const playersOnTile = players.filter((player) => player.position === tile.id);
-              const isCorner = CORNER_INDEXES.has(tileIndex);
-              const isProperty = tile.type === 'property';
-              const owner = ownerForTile(tile.id, players);
-              const groupColor = tile.colorGroup ? GROUP_COLORS[tile.colorGroup] : '#556287';
-              const isHorizontalEdge = row === 0 || row === 10;
+        return (
+          <View
+            key={tile.id}
+            style={[
+              styles.tile,
+              {
+                width: tileLayout.width,
+                height: tileLayout.height,
+                left: tileLayout.left,
+                top: tileLayout.top,
+                zIndex: tileLayout.zIndex,
+              },
+              isProperty ? styles.propertyTile : styles.nonPropertyTile,
+              isCorner ? styles.cornerTile : null,
+            ]}
+          >
+            {isProperty ? (
+              <View style={[styles.propertyStrip, { backgroundColor: groupColor }]} />
+            ) : (
+              <View style={styles.nonPropertyHeader}>
+                <Text style={styles.nonPropertyIcon}>{specialIconForTile(tile)}</Text>
+              </View>
+            )}
 
-              return (
+            <View style={styles.tileBody}>
+              <View style={styles.tileHeaderRow}>
+                <Text numberOfLines={2} style={[styles.tileName, isCorner ? styles.cornerName : null]}>
+                  {tile.name}
+                </Text>
+                {owner ? (
+                  <View style={[styles.ownerRing, { borderColor: owner.color }]}>
+                    <View style={[styles.ownerDot, { backgroundColor: owner.color }]} />
+                  </View>
+                ) : null}
+              </View>
+              <Text style={[styles.tilePrice, isProperty ? styles.propertyPrice : styles.nonPropertyPrice]}>
+                {isProperty ? `$${tile.price}` : 'Special'}
+              </Text>
+            </View>
+
+            <View style={styles.tokenDock}>
+              {playersOnTile.map((player, index) => (
                 <View
-                  key={tile.id}
+                  key={player.id}
                   style={[
-                    styles.tile,
-                    isProperty ? styles.propertyTile : styles.nonPropertyTile,
-                    isHorizontalEdge ? styles.horizontalEdgeTile : null,
-                    isCorner ? styles.cornerTile : null,
+                    styles.tokenShell,
+                    tokenSlotStyle(index, layout.tokenSize),
+                    {
+                      width: layout.tokenSize,
+                      height: layout.tokenSize,
+                      borderRadius: layout.tokenSize / 2,
+                      borderColor: player.id === 'human' ? '#FFFFFF' : player.color,
+                    },
+                    player.id === 'human' ? styles.humanTokenShell : null,
                   ]}
                 >
-                  {isProperty ? (
-                    <View style={[styles.propertyStrip, { backgroundColor: groupColor }]} />
-                  ) : (
-                    <View style={styles.nonPropertyHeader}>
-                      <Text style={styles.nonPropertyIcon}>{specialIconForTile(tile)}</Text>
-                    </View>
-                  )}
-
-                  <View style={styles.tileBody}>
-                    <View style={styles.tileHeaderRow}>
-                      <Text
-                        numberOfLines={2}
-                        style={[
-                          styles.tileName,
-                          isProperty ? styles.propertyName : styles.nonPropertyName,
-                          isCorner ? styles.cornerTileName : null,
-                          isHorizontalEdge ? styles.horizontalTileName : null,
-                        ]}
-                      >
-                        {tile.name}
-                      </Text>
-                      {owner ? (
-                        <View style={[styles.ownerRing, { borderColor: owner.color }]}>
-                          <View style={[styles.ownerDot, { backgroundColor: owner.color }]} />
-                        </View>
-                      ) : null}
-                    </View>
-
-                    <Text style={[styles.tilePrice, isProperty ? styles.propertyPrice : styles.nonPropertyPrice]}>
-                      {isProperty ? `$${tile.price}` : 'Special'}
-                    </Text>
-                  </View>
-
-                  <View style={styles.tokenDock}>
-                    {playersOnTile.map((player, index) => (
-                      <View
-                        key={player.id}
-                        style={[
-                          styles.tokenShell,
-                          tokenSlotStyle(index),
-                          { borderColor: player.color },
-                          player.id === 'human' ? styles.humanTokenShell : null,
-                        ]}
-                      >
-                        <View
-                          style={[
-                            styles.tokenCore,
-                            { backgroundColor: player.color },
-                            player.id === 'human' ? styles.humanTokenCore : null,
-                          ]}
-                        />
-                      </View>
-                    ))}
-                  </View>
+                  <View
+                    style={[
+                      styles.tokenCore,
+                      {
+                        width: layout.tokenSize * 0.58,
+                        height: layout.tokenSize * 0.58,
+                        borderRadius: (layout.tokenSize * 0.58) / 2,
+                        backgroundColor: player.color,
+                      },
+                    ]}
+                  />
                 </View>
-              );
-            })}
+              ))}
+            </View>
           </View>
-        ))}
-      </View>
+        );
+      })}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   frame: {
-    backgroundColor: PALETTE.frame,
-    borderRadius: 20,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#2A3A69',
-  },
-  board: {
     width: '100%',
     aspectRatio: 1,
-    borderRadius: 12,
+    position: 'relative',
+    borderRadius: 20,
     overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: PALETTE.border,
-    backgroundColor: PALETTE.board,
+    backgroundColor: PALETTE.frame,
+    marginBottom: 10,
   },
-  row: {
-    flex: 1,
-    flexDirection: 'row',
+  isoBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: PALETTE.boardCore,
+    borderWidth: 2,
+    borderColor: PALETTE.boardGlow,
+    borderRadius: 20,
+  },
+  centerBadge: {
+    position: 'absolute',
+    left: '30%',
+    top: '41%',
+    width: '40%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#0E1730',
+    borderWidth: 1,
+    borderColor: '#2A3D72',
+    borderRadius: 12,
+    paddingVertical: 8,
+    zIndex: 2,
+  },
+  centerTitle: {
+    color: '#D7E5FF',
+    fontWeight: '800',
+    letterSpacing: 1.4,
+    fontSize: 11,
+  },
+  centerSub: {
+    color: '#8FA4D6',
+    fontSize: 9,
+    marginTop: 2,
   },
   tile: {
-    flex: 1,
-    borderWidth: 0.6,
-    borderColor: PALETTE.border,
+    position: 'absolute',
+    borderRadius: 8,
     overflow: 'hidden',
-    position: 'relative',
+    borderWidth: 1,
+    borderColor: PALETTE.edge,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.35,
+    shadowRadius: 2.5,
+    elevation: 4,
   },
   propertyTile: {
-    backgroundColor: PALETTE.propertyTile,
+    backgroundColor: PALETTE.tileProperty,
   },
   nonPropertyTile: {
-    backgroundColor: PALETTE.specialTile,
-  },
-  horizontalEdgeTile: {
-    paddingBottom: 1,
+    backgroundColor: PALETTE.tileSpecial,
   },
   cornerTile: {
-    backgroundColor: PALETTE.corner,
-    borderWidth: 1.6,
+    backgroundColor: PALETTE.tileCorner,
+    borderWidth: 1.3,
   },
   propertyStrip: {
-    height: 7,
-    borderBottomWidth: 0.6,
-    borderBottomColor: '#0b1022',
+    height: 8,
+    borderBottomWidth: 0.8,
+    borderBottomColor: '#0a1226',
   },
   nonPropertyHeader: {
-    height: 7,
-    backgroundColor: '#2F3E66',
-    borderBottomWidth: 0.6,
-    borderBottomColor: '#0b1022',
+    height: 8,
+    backgroundColor: '#31426F',
+    borderBottomWidth: 0.8,
+    borderBottomColor: '#0a1226',
     alignItems: 'center',
     justifyContent: 'center',
   },
   nonPropertyIcon: {
-    color: '#DBE6FF',
-    fontSize: 6,
+    color: '#E6EEFF',
+    fontSize: 7,
     fontWeight: '800',
   },
   tileBody: {
     flex: 1,
-    paddingHorizontal: 3,
-    paddingVertical: 2,
+    paddingHorizontal: 4,
+    paddingTop: 3,
+    paddingBottom: 16,
     justifyContent: 'space-between',
-    gap: 1,
-    paddingBottom: 18,
   },
   tileHeaderRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    gap: 2,
+    gap: 3,
   },
   tileName: {
     color: PALETTE.text,
+    fontSize: 8.6,
+    lineHeight: 10,
     fontWeight: '700',
     flex: 1,
-    lineHeight: 8,
   },
-  propertyName: {
-    fontSize: 7,
-  },
-  nonPropertyName: {
-    fontSize: 6.5,
-    color: '#D5E1FF',
-  },
-  horizontalTileName: {
-    fontSize: 7.4,
-    lineHeight: 8.4,
-  },
-  cornerTileName: {
-    fontSize: 8.2,
-    lineHeight: 9,
+  cornerName: {
+    fontSize: 9.4,
+    lineHeight: 11,
   },
   tilePrice: {
-    fontSize: 6.5,
+    fontSize: 8,
     fontWeight: '700',
   },
   propertyPrice: {
-    color: '#EAF0FF',
+    color: '#ECF3FF',
   },
   nonPropertyPrice: {
     color: PALETTE.specialMuted,
-    fontWeight: '600',
   },
   ownerRing: {
-    width: 9,
-    height: 9,
-    borderRadius: 4.5,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -270,55 +309,37 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   ownerDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-  },
-  centerCell: {
-    flex: 1,
-    backgroundColor: PALETTE.center,
+    width: 4.2,
+    height: 4.2,
+    borderRadius: 2.1,
   },
   tokenDock: {
     position: 'absolute',
     right: 1,
     bottom: 1,
-    width: 32,
-    height: 32,
-    zIndex: 12,
-    elevation: 6,
+    width: 34,
+    height: 34,
+    zIndex: 20,
+    elevation: 8,
   },
   tokenShell: {
     position: 'absolute',
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    borderWidth: 1.6,
-    backgroundColor: '#0A142F',
+    borderWidth: 1.8,
+    backgroundColor: '#0A142E',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.5,
-    shadowRadius: 1.5,
+    shadowRadius: 1.6,
   },
   humanTokenShell: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    borderColor: '#FFFFFF',
-    shadowColor: '#9EC5FF',
+    shadowColor: '#91BBFF',
     shadowOpacity: 0.95,
-    shadowRadius: 4,
+    shadowRadius: 4.2,
     shadowOffset: { width: 0, height: 0 },
   },
   tokenCore: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
-  },
-  humanTokenCore: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    borderRadius: 99,
   },
 });
