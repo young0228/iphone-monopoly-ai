@@ -24,7 +24,6 @@ const UI = {
   successBorder: '#24A869',
   neutral: '#536186',
   neutralBorder: '#425173',
-  disabled: '#3A4361',
 };
 
 const HUMAN_TURN_PHASES = {
@@ -75,9 +74,17 @@ export default function App() {
 
     if (landing.canBuy) {
       setHumanTurnPhase(HUMAN_TURN_PHASES.MUST_DECIDE_PROPERTY);
-    } else {
-      setHumanTurnPhase(HUMAN_TURN_PHASES.READY_TO_END);
+      return;
     }
+
+    // Future doubles behavior: if an extra roll is granted, keep only Roll Dice visible.
+    if (roll.extraRollGranted) {
+      setHumanTurnPhase(HUMAN_TURN_PHASES.READY_TO_ROLL);
+      setStatusMessage(`${activePlayer.name} rolled ${roll.total}. ${landing.message} Roll again for doubles.`);
+      return;
+    }
+
+    setHumanTurnPhase(HUMAN_TURN_PHASES.READY_TO_END);
   };
 
   const handleBuy = () => {
@@ -150,15 +157,8 @@ export default function App() {
         </View>
 
         <View style={styles.buttonsWrap}>
-          {!activePlayer.isAI && (
-            <TouchableOpacity
-              style={[
-                styles.buttonBase,
-                humanTurnPhase === HUMAN_TURN_PHASES.READY_TO_ROLL ? styles.primaryButton : styles.disabledButton,
-              ]}
-              onPress={handleHumanRoll}
-              disabled={humanTurnPhase !== HUMAN_TURN_PHASES.READY_TO_ROLL}
-            >
+          {!activePlayer.isAI && humanTurnPhase === HUMAN_TURN_PHASES.READY_TO_ROLL && (
+            <TouchableOpacity style={[styles.buttonBase, styles.primaryButton]} onPress={handleHumanRoll}>
               <Text style={styles.buttonText}>Roll Dice</Text>
             </TouchableOpacity>
           )}
@@ -285,10 +285,6 @@ const styles = StyleSheet.create({
   primaryButton: {
     backgroundColor: UI.primary,
     borderColor: UI.primaryBorder,
-  },
-  disabledButton: {
-    backgroundColor: UI.disabled,
-    borderColor: '#4a5477',
   },
   buyButton: {
     backgroundColor: UI.success,
