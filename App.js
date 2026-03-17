@@ -1,12 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Board from './src/components/Board';
 import { TILES } from './src/game/gameData';
 import {
