@@ -13,6 +13,7 @@ const PALETTE = {
   specialTile: '#36405E',
 };
 
+// Keeps the board path mapping in one place for easier conflict resolution.
 function tileForGridCell(row, col) {
   const index = BOARD_POSITIONS.findIndex((pos) => pos.row === row && pos.col === col);
   return index >= 0 ? TILES[index] : null;

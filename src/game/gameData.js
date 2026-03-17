@@ -1,3 +1,4 @@
+// Visual token colors are intentionally high-contrast for the dark board theme.
 export const PLAYER_SETUP = [
   { id: 'human', name: 'You', color: '#60A5FA', isAI: false },
   { id: 'ai-1', name: 'AI 1', color: '#F87171', isAI: true },

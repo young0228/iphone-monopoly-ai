@@ -21,7 +21,6 @@ import {
 const COLORS = {
   appBg: '#0B1020',
   cardBg: '#151B2E',
-  cardSoft: '#1B2340',
   text: '#E8EEFF',
   textMuted: '#A6B1D8',
   primary: '#5B8CFF',
