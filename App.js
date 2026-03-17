@@ -35,6 +35,8 @@ export default function App() {
 
   const activePlayer = players[currentPlayerIndex];
   const activeTile = TILES[activePlayer.position];
+  const activeTileOwner = players.find((player) => player.properties.includes(activeTile.id));
+  const isPurchasableTile = activeTile.type === 'property' && !activeTileOwner;
 
   const sortedPlayers = useMemo(
     () => [...players].sort((a, b) => (a.isAI === b.isAI ? 0 : a.isAI ? 1 : -1)),
@@ -108,6 +110,13 @@ export default function App() {
           </View>
           <Text style={styles.info}>Last Roll: {lastRoll ?? '-'}</Text>
           <Text style={styles.message}>{statusMessage}</Text>
+          <Text style={styles.tileHint}>
+            {activeTile.type !== 'property'
+              ? `Special tile: ${activeTile.name} (not purchasable)`
+              : isPurchasableTile
+                ? `${activeTile.name} is available to buy for $${activeTile.price}.`
+                : `Owned by ${activeTileOwner?.name ?? 'another player'}${activeTile.rent ? ` • Rent $${activeTile.rent}` : ''}.`}
+          </Text>
         </View>
 
         <View style={styles.buttonsWrap}>
@@ -212,6 +221,12 @@ const styles = StyleSheet.create({
     color: UI.muted,
     lineHeight: 18,
     fontSize: 13,
+  },
+  tileHint: {
+    marginTop: 4,
+    color: '#D2DCFF',
+    fontSize: 12,
+    lineHeight: 16,
   },
   buttonsWrap: {
     flexDirection: 'row',

@@ -7,10 +7,13 @@ const PALETTE = {
   board: '#111A34',
   border: '#384773',
   tileBase: '#1A2648',
-  corner: '#273C78',
+  propertyTile: '#202D53',
+  specialTile: '#18223F',
+  corner: '#2A3E7B',
   center: '#0D1530',
   text: '#EAF0FF',
   muted: '#A4B2DF',
+  specialMuted: '#8A9ACB',
   ownerRingBg: '#081024',
 };
 
@@ -36,6 +39,16 @@ function ownerForTile(tileId, players) {
   return players.find((p) => p.properties.includes(tileId));
 }
 
+function specialIconForTile(tile) {
+  if (tile.name.includes('Chance')) return '?';
+  if (tile.name.includes('Community Chest')) return 'CC';
+  if (tile.name.includes('Tax')) return '$';
+  if (tile.name.includes('Jail')) return 'J';
+  if (tile.name.includes('Parking')) return 'P';
+  if (tile.name === 'GO') return 'GO';
+  return '•';
+}
+
 export default function Board({ players }) {
   return (
     <View style={styles.frame}>
@@ -55,18 +68,37 @@ export default function Board({ players }) {
               const isProperty = tile.type === 'property';
               const owner = ownerForTile(tile.id, players);
               const groupColor = tile.colorGroup ? GROUP_COLORS[tile.colorGroup] : '#556287';
+              const isHorizontalEdge = row === 0 || row === 10;
 
               return (
-                <View key={tile.id} style={[styles.tile, isCorner ? styles.cornerTile : null]}>
+                <View
+                  key={tile.id}
+                  style={[
+                    styles.tile,
+                    isProperty ? styles.propertyTile : styles.nonPropertyTile,
+                    isHorizontalEdge ? styles.horizontalEdgeTile : null,
+                    isCorner ? styles.cornerTile : null,
+                  ]}
+                >
                   {isProperty ? (
                     <View style={[styles.propertyStrip, { backgroundColor: groupColor }]} />
                   ) : (
-                    <View style={styles.neutralStrip} />
+                    <View style={styles.nonPropertyHeader}>
+                      <Text style={styles.nonPropertyIcon}>{specialIconForTile(tile)}</Text>
+                    </View>
                   )}
 
                   <View style={styles.tileBody}>
                     <View style={styles.tileHeaderRow}>
-                      <Text numberOfLines={1} style={[styles.tileName, isCorner ? styles.cornerTileName : null]}>
+                      <Text
+                        numberOfLines={2}
+                        style={[
+                          styles.tileName,
+                          isProperty ? styles.propertyName : styles.nonPropertyName,
+                          isCorner ? styles.cornerTileName : null,
+                          isHorizontalEdge ? styles.horizontalTileName : null,
+                        ]}
+                      >
                         {tile.name}
                       </Text>
                       {owner ? (
@@ -76,7 +108,10 @@ export default function Board({ players }) {
                       ) : null}
                     </View>
 
-                    <Text style={styles.tilePrice}>{isProperty ? `$${tile.price}` : '•'}</Text>
+                    <Text style={[styles.tilePrice, isProperty ? styles.propertyPrice : styles.nonPropertyPrice]}>
+                      {isProperty ? `$${tile.price}` : 'Special'}
+                    </Text>
+
                     <View style={styles.tokensWrap}>
                       {playersOnTile.map((player) => (
                         <View key={player.id} style={[styles.tokenRing, { borderColor: player.color }]}>
@@ -118,58 +153,95 @@ const styles = StyleSheet.create({
   },
   tile: {
     flex: 1,
-    borderWidth: 0.5,
+    borderWidth: 0.6,
     borderColor: PALETTE.border,
-    backgroundColor: PALETTE.tileBase,
     overflow: 'hidden',
+  },
+  propertyTile: {
+    backgroundColor: PALETTE.propertyTile,
+  },
+  nonPropertyTile: {
+    backgroundColor: PALETTE.specialTile,
+  },
+  horizontalEdgeTile: {
+    paddingBottom: 1,
   },
   cornerTile: {
     backgroundColor: PALETTE.corner,
-    borderWidth: 1.2,
+    borderWidth: 1.6,
   },
   propertyStrip: {
-    height: 5,
-    borderBottomWidth: 0.5,
+    height: 7,
+    borderBottomWidth: 0.6,
     borderBottomColor: '#0b1022',
   },
-  neutralStrip: {
-    height: 5,
-    backgroundColor: '#4C5A84',
-    borderBottomWidth: 0.5,
+  nonPropertyHeader: {
+    height: 7,
+    backgroundColor: '#2F3E66',
+    borderBottomWidth: 0.6,
     borderBottomColor: '#0b1022',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  nonPropertyIcon: {
+    color: '#DBE6FF',
+    fontSize: 6,
+    fontWeight: '800',
   },
   tileBody: {
     flex: 1,
-    padding: 3,
+    paddingHorizontal: 3,
+    paddingVertical: 2,
     justifyContent: 'space-between',
+    gap: 1,
   },
   tileHeaderRow: {
     flexDirection: 'row',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
-    alignItems: 'center',
     gap: 2,
   },
   tileName: {
     color: PALETTE.text,
-    fontSize: 7,
     fontWeight: '700',
     flex: 1,
+    lineHeight: 8,
   },
-  cornerTileName: {
-    fontSize: 8,
-  },
-  tilePrice: {
-    color: PALETTE.muted,
+  propertyName: {
     fontSize: 7,
   },
+  nonPropertyName: {
+    fontSize: 6.5,
+    color: '#D5E1FF',
+  },
+  horizontalTileName: {
+    fontSize: 7.4,
+    lineHeight: 8.4,
+  },
+  cornerTileName: {
+    fontSize: 8.2,
+    lineHeight: 9,
+  },
+  tilePrice: {
+    fontSize: 6.5,
+    fontWeight: '700',
+  },
+  propertyPrice: {
+    color: '#EAF0FF',
+  },
+  nonPropertyPrice: {
+    color: PALETTE.specialMuted,
+    fontWeight: '600',
+  },
   ownerRing: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 9,
+    height: 9,
+    borderRadius: 4.5,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: PALETTE.ownerRingBg,
+    marginTop: 1,
   },
   ownerDot: {
     width: 4,
