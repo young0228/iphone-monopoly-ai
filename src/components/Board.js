@@ -107,7 +107,7 @@ export default function Board({ players }) {
 
                     <View style={styles.tileBody}>
                       <View style={styles.tileHeaderRow}>
-                        <Text numberOfLines={2} style={[styles.tileName, isCorner ? styles.cornerName : null]}>
+                        <Text numberOfLines={3} style={[styles.tileName, isCorner ? styles.cornerName : null]}>
                           {tile.name}
                         </Text>
                         {owner ? (
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     marginBottom: 10,
     position: 'relative',
-    transform: [{ scaleY: 0.93 }],
+    transform: [{ scaleY: 0.95 }],
   },
   frameShadow: {
     ...StyleSheet.absoluteFillObject,
@@ -174,10 +174,10 @@ const styles = StyleSheet.create({
     borderColor: '#2A3A69',
     backgroundColor: PALETTE.frame,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.45,
-    shadowRadius: 8,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.55,
+    shadowRadius: 10,
+    elevation: 12,
   },
   board: {
     flex: 1,
@@ -193,10 +193,14 @@ const styles = StyleSheet.create({
   },
   tile: {
     flex: 1,
-    borderWidth: 0.7,
-    borderColor: '#4A5F97',
-    overflow: 'hidden',
+    borderWidth: 0.8,
+    borderColor: '#4F65A0',
+    overflow: 'visible',
     position: 'relative',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.28,
+    shadowRadius: 2.4,
   },
   propertyTile: {
     backgroundColor: PALETTE.tileProperty,
@@ -206,7 +210,14 @@ const styles = StyleSheet.create({
   },
   cornerTile: {
     backgroundColor: PALETTE.tileCorner,
-    borderWidth: 1.2,
+    borderWidth: 1.6,
+    transform: [{ scale: 1.08 }],
+    zIndex: 30,
+    elevation: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.45,
+    shadowRadius: 4.2,
   },
   propertyStrip: {
     height: 7,
@@ -228,10 +239,11 @@ const styles = StyleSheet.create({
   },
   tileBody: {
     flex: 1,
-    paddingHorizontal: 3,
-    paddingVertical: 2,
-    paddingBottom: 16,
+    paddingHorizontal: 4,
+    paddingTop: 3,
+    paddingBottom: 17,
     justifyContent: 'space-between',
+    gap: 2,
   },
   tileHeaderRow: {
     flexDirection: 'row',
@@ -241,17 +253,17 @@ const styles = StyleSheet.create({
   },
   tileName: {
     color: PALETTE.text,
-    fontSize: 7.4,
-    lineHeight: 8.4,
+    fontSize: 8.2,
+    lineHeight: 9.6,
     fontWeight: '700',
     flex: 1,
   },
   cornerName: {
-    fontSize: 8.2,
-    lineHeight: 9.2,
+    fontSize: 9.4,
+    lineHeight: 10.4,
   },
   tilePrice: {
-    fontSize: 7,
+    fontSize: 7.6,
     fontWeight: '700',
   },
   propertyPrice: {
@@ -299,8 +311,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 1,
     bottom: 1,
-    width: 34,
-    height: 34,
+    width: 36,
+    height: 36,
     zIndex: 20,
     elevation: 8,
   },
