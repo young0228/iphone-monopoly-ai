@@ -49,6 +49,16 @@ function specialIconForTile(tile) {
   return '•';
 }
 
+function tokenSlotStyle(index) {
+  const slots = [
+    { top: 1, left: 1 },
+    { top: 1, right: 1 },
+    { bottom: 1, left: 1 },
+    { bottom: 1, right: 1 },
+  ];
+  return slots[index] ?? slots[slots.length - 1];
+}
+
 export default function Board({ players }) {
   return (
     <View style={styles.frame}>
@@ -111,14 +121,28 @@ export default function Board({ players }) {
                     <Text style={[styles.tilePrice, isProperty ? styles.propertyPrice : styles.nonPropertyPrice]}>
                       {isProperty ? `$${tile.price}` : 'Special'}
                     </Text>
+                  </View>
 
-                    <View style={styles.tokensWrap}>
-                      {playersOnTile.map((player) => (
-                        <View key={player.id} style={[styles.tokenRing, { borderColor: player.color }]}>
-                          <View style={[styles.tokenCore, { backgroundColor: player.color }]} />
-                        </View>
-                      ))}
-                    </View>
+                  <View style={styles.tokenDock}>
+                    {playersOnTile.map((player, index) => (
+                      <View
+                        key={player.id}
+                        style={[
+                          styles.tokenShell,
+                          tokenSlotStyle(index),
+                          { borderColor: player.color },
+                          player.id === 'human' ? styles.humanTokenShell : null,
+                        ]}
+                      >
+                        <View
+                          style={[
+                            styles.tokenCore,
+                            { backgroundColor: player.color },
+                            player.id === 'human' ? styles.humanTokenCore : null,
+                          ]}
+                        />
+                      </View>
+                    ))}
                   </View>
                 </View>
               );
@@ -156,6 +180,7 @@ const styles = StyleSheet.create({
     borderWidth: 0.6,
     borderColor: PALETTE.border,
     overflow: 'hidden',
+    position: 'relative',
   },
   propertyTile: {
     backgroundColor: PALETTE.propertyTile,
@@ -194,6 +219,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     justifyContent: 'space-between',
     gap: 1,
+    paddingBottom: 18,
   },
   tileHeaderRow: {
     flexDirection: 'row',
@@ -252,23 +278,47 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: PALETTE.center,
   },
-  tokensWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 1,
+  tokenDock: {
+    position: 'absolute',
+    right: 1,
+    bottom: 1,
+    width: 32,
+    height: 32,
+    zIndex: 12,
+    elevation: 6,
   },
-  tokenRing: {
+  tokenShell: {
+    position: 'absolute',
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: 1.6,
+    backgroundColor: '#0A142F',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.5,
+    shadowRadius: 1.5,
+  },
+  humanTokenShell: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderColor: '#FFFFFF',
+    shadowColor: '#9EC5FF',
+    shadowOpacity: 0.95,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  tokenCore: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+  },
+  humanTokenCore: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    borderWidth: 1,
-    backgroundColor: '#091022',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tokenCore: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
   },
 });
