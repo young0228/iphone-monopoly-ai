@@ -7,7 +7,7 @@ import {
   createInitialPlayers,
   movePlayer,
   resolveLanding,
-  rollDie,
+  rollTurn,
   runAiTurn,
 } from './src/game/gameLogic';
 
@@ -24,6 +24,13 @@ const UI = {
   successBorder: '#24A869',
   neutral: '#536186',
   neutralBorder: '#425173',
+  disabled: '#3A4361',
+};
+
+const HUMAN_TURN_PHASES = {
+  READY_TO_ROLL: 'ready_to_roll',
+  MUST_DECIDE_PROPERTY: 'must_decide_property',
+  READY_TO_END: 'ready_to_end',
 };
 
 export default function App() {
@@ -31,7 +38,7 @@ export default function App() {
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
   const [statusMessage, setStatusMessage] = useState('Tap Roll Dice to begin.');
   const [lastRoll, setLastRoll] = useState(null);
-  const [canBuyCurrentTile, setCanBuyCurrentTile] = useState(false);
+  const [humanTurnPhase, setHumanTurnPhase] = useState(HUMAN_TURN_PHASES.READY_TO_ROLL);
 
   const activePlayer = players[currentPlayerIndex];
   const activeTile = TILES[activePlayer.position];
@@ -44,50 +51,73 @@ export default function App() {
   );
 
   const goToNextPlayer = () => {
-    setCurrentPlayerIndex((prev) => (prev + 1) % players.length);
-    setCanBuyCurrentTile(false);
+    setCurrentPlayerIndex((prev) => {
+      const next = (prev + 1) % players.length;
+      const nextPlayer = players[next];
+      setHumanTurnPhase(nextPlayer.isAI ? HUMAN_TURN_PHASES.READY_TO_END : HUMAN_TURN_PHASES.READY_TO_ROLL);
+      return next;
+    });
   };
 
   const handleHumanRoll = () => {
-    if (activePlayer.isAI) {
+    if (activePlayer.isAI || humanTurnPhase !== HUMAN_TURN_PHASES.READY_TO_ROLL) {
       return;
     }
 
-    const die = rollDie();
-    setLastRoll(die);
+    const roll = rollTurn();
+    setLastRoll(roll.total);
 
-    const moved = movePlayer(players, currentPlayerIndex, die);
+    const moved = movePlayer(players, currentPlayerIndex, roll.total);
     const landing = resolveLanding(moved, currentPlayerIndex);
 
     setPlayers(landing.players);
-    setCanBuyCurrentTile(Boolean(landing.canBuy));
-    setStatusMessage(`${activePlayer.name} rolled ${die}. ${landing.message}`);
+    setStatusMessage(`${activePlayer.name} rolled ${roll.total}. ${landing.message}`);
+
+    if (landing.canBuy) {
+      setHumanTurnPhase(HUMAN_TURN_PHASES.MUST_DECIDE_PROPERTY);
+    } else {
+      setHumanTurnPhase(HUMAN_TURN_PHASES.READY_TO_END);
+    }
   };
 
   const handleBuy = () => {
+    if (activePlayer.isAI || humanTurnPhase !== HUMAN_TURN_PHASES.MUST_DECIDE_PROPERTY) {
+      return;
+    }
+
     const purchase = buyProperty(players, currentPlayerIndex);
     setPlayers(purchase.players);
     setStatusMessage(purchase.message);
-    setCanBuyCurrentTile(false);
+    setHumanTurnPhase(HUMAN_TURN_PHASES.READY_TO_END);
     goToNextPlayer();
   };
 
   const handleSkipBuy = () => {
+    if (activePlayer.isAI || humanTurnPhase !== HUMAN_TURN_PHASES.MUST_DECIDE_PROPERTY) {
+      return;
+    }
+
     setStatusMessage(`${activePlayer.name} skipped buying ${activeTile.name}.`);
-    setCanBuyCurrentTile(false);
+    setHumanTurnPhase(HUMAN_TURN_PHASES.READY_TO_END);
     goToNextPlayer();
   };
 
-  const handleNextTurn = () => {
+  const handleEndTurn = () => {
+    if (activePlayer.isAI || humanTurnPhase !== HUMAN_TURN_PHASES.READY_TO_END) {
+      return;
+    }
+    goToNextPlayer();
+  };
+
+  const handleAiTurn = () => {
     if (!activePlayer.isAI) {
-      goToNextPlayer();
       return;
     }
 
     const result = runAiTurn(players, currentPlayerIndex);
     setPlayers(result.players);
-    setLastRoll(result.die);
-    setStatusMessage(`${activePlayer.name} rolled ${result.die}. ${result.message}`);
+    setLastRoll(result.total);
+    setStatusMessage(`${activePlayer.name} rolled ${result.total}. ${result.message}`);
     goToNextPlayer();
   };
 
@@ -121,12 +151,19 @@ export default function App() {
 
         <View style={styles.buttonsWrap}>
           {!activePlayer.isAI && (
-            <TouchableOpacity style={[styles.buttonBase, styles.primaryButton]} onPress={handleHumanRoll}>
+            <TouchableOpacity
+              style={[
+                styles.buttonBase,
+                humanTurnPhase === HUMAN_TURN_PHASES.READY_TO_ROLL ? styles.primaryButton : styles.disabledButton,
+              ]}
+              onPress={handleHumanRoll}
+              disabled={humanTurnPhase !== HUMAN_TURN_PHASES.READY_TO_ROLL}
+            >
               <Text style={styles.buttonText}>Roll Dice</Text>
             </TouchableOpacity>
           )}
 
-          {canBuyCurrentTile && !activePlayer.isAI && (
+          {!activePlayer.isAI && humanTurnPhase === HUMAN_TURN_PHASES.MUST_DECIDE_PROPERTY && (
             <>
               <TouchableOpacity style={[styles.buttonBase, styles.buyButton]} onPress={handleBuy}>
                 <Text style={styles.buttonText}>Buy Property</Text>
@@ -137,9 +174,15 @@ export default function App() {
             </>
           )}
 
-          {(!canBuyCurrentTile || activePlayer.isAI) && (
-            <TouchableOpacity style={[styles.buttonBase, styles.primaryButton]} onPress={handleNextTurn}>
-              <Text style={styles.buttonText}>{activePlayer.isAI ? 'Run AI Turn' : 'End Turn'}</Text>
+          {!activePlayer.isAI && humanTurnPhase === HUMAN_TURN_PHASES.READY_TO_END && (
+            <TouchableOpacity style={[styles.buttonBase, styles.primaryButton]} onPress={handleEndTurn}>
+              <Text style={styles.buttonText}>End Turn</Text>
+            </TouchableOpacity>
+          )}
+
+          {activePlayer.isAI && (
+            <TouchableOpacity style={[styles.buttonBase, styles.primaryButton]} onPress={handleAiTurn}>
+              <Text style={styles.buttonText}>Run AI Turn</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -242,6 +285,10 @@ const styles = StyleSheet.create({
   primaryButton: {
     backgroundColor: UI.primary,
     borderColor: UI.primaryBorder,
+  },
+  disabledButton: {
+    backgroundColor: UI.disabled,
+    borderColor: '#4a5477',
   },
   buyButton: {
     backgroundColor: UI.success,

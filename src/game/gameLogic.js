@@ -18,6 +18,16 @@ export function rollDie() {
   return Math.floor(Math.random() * 6) + 1;
 }
 
+// Future doubles hook: keep structure now, but one roll per turn remains enforced in App turn phase.
+export function rollTurn() {
+  const total = rollDie();
+  return {
+    total,
+    isDouble: false,
+    extraRollGranted: false,
+  };
+}
+
 export function movePlayer(players, playerIndex, steps) {
   const updated = [...players];
   const player = { ...updated[playerIndex] };
@@ -96,8 +106,8 @@ export function buyProperty(players, playerIndex) {
 }
 
 export function runAiTurn(players, playerIndex) {
-  const die = rollDie();
-  let movedPlayers = movePlayer(players, playerIndex, die);
+  const roll = rollTurn();
+  let movedPlayers = movePlayer(players, playerIndex, roll.total);
   const landing = resolveLanding(movedPlayers, playerIndex);
   movedPlayers = landing.players;
 
@@ -108,7 +118,7 @@ export function runAiTurn(players, playerIndex) {
     const purchase = buyProperty(movedPlayers, playerIndex);
     return {
       players: purchase.players,
-      die,
+      total: roll.total,
       message: `${landing.message} ${purchase.message}`,
     };
   }
@@ -119,7 +129,7 @@ export function runAiTurn(players, playerIndex) {
 
   return {
     players: movedPlayers,
-    die,
+    total: roll.total,
     message: `${landing.message} ${skipReason}`,
   };
 }
