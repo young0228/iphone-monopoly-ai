@@ -139,7 +139,7 @@ export default function App() {
           <Text style={styles.subtitle}>Single Player • 3 AI Opponents</Text>
         </View>
 
-        <Board players={players} />
+        <Board players={players} activePosition={activePlayer.position} />
 
         <View style={styles.infoCard}>
           <Text style={styles.cardLabel}>Current Turn</Text>
@@ -156,6 +156,7 @@ export default function App() {
                 ? `${activeTile.name} is available to buy for $${activeTile.price}.`
                 : `Owned by ${activeTileOwner?.name ?? 'another player'}${activeTile.rent ? ` • Rent $${activeTile.rent}` : ''}.`}
           </Text>
+          <Text style={styles.tileDetailNote}>Full tile details are shown here for the active tile.</Text>
         </View>
 
         <View style={styles.infoCard}>
@@ -284,6 +285,11 @@ const styles = StyleSheet.create({
     color: '#D2DCFF',
     fontSize: 12,
     lineHeight: 16,
+  },
+  tileDetailNote: {
+    marginTop: 4,
+    color: '#9DB0E6',
+    fontSize: 11,
   },
   buttonsWrap: {
     flexDirection: 'row',

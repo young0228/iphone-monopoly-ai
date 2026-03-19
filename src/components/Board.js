@@ -81,16 +81,6 @@ function specialIconForTile(tile) {
   return '•';
 }
 
-function displayTileName(tile, isSideEdge) {
-  if (!isSideEdge) return tile.name;
-  return tile.name
-    .replace('Avenue', 'Ave')
-    .replace('Railroad', 'RR')
-    .replace('Community Chest', 'Com Chest')
-    .replace('North Carolina', 'N. Carolina')
-    .replace('Pennsylvania', 'Penn');
-}
-
 function tokenSlotStyle(index) {
   const slots = [
     { top: 6, left: 6 },
@@ -101,7 +91,7 @@ function tokenSlotStyle(index) {
   return slots[index] ?? slots[slots.length - 1];
 }
 
-export default function Board({ players }) {
+export default function Board({ players, activePosition }) {
   return (
     <View style={styles.perspectiveShell}>
       <View style={styles.frameShadow} />
@@ -126,6 +116,7 @@ export default function Board({ players }) {
                 const isCorner = CORNER_INDEXES.has(tileIndex);
                 const isSideEdge = col === 0 || col === BOARD_SIZE - 1;
                 const isProperty = tile.type === 'property';
+                const isActiveTile = tile.id === activePosition;
                 const owner = ownerForTile(tile.id, players);
                 const groupColor = tile.colorGroup ? GROUP_COLORS[tile.colorGroup] : '#56648A';
 
@@ -138,6 +129,7 @@ export default function Board({ players }) {
                       isProperty ? styles.propertyTile : styles.nonPropertyTile,
                       isSideEdge ? styles.sideEdgeTile : null,
                       isCorner ? styles.cornerTile : null,
+                      isActiveTile ? styles.activeTile : null,
                     ]}
                   >
                     {isProperty ? (
@@ -253,6 +245,16 @@ const styles = StyleSheet.create({
   sideEdgeTile: {
     borderColor: '#5D75B5',
   },
+  activeTile: {
+    borderColor: '#EAF2FF',
+    borderWidth: 2.2,
+    shadowColor: '#9BC0FF',
+    shadowOpacity: 0.75,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 0 },
+    zIndex: 40,
+    elevation: 22,
+  },
   cornerTile: {
     backgroundColor: PALETTE.tileCorner,
     borderWidth: 2,
@@ -290,8 +292,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 3,
   },
-  sideEdgeBody: {
-    paddingHorizontal: 7,
+  sideEdgeMinimalBody: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingBottom: 18,
+  },
+  sideEdgeGlyph: {
+    color: '#CFE0FF',
+    fontSize: 10,
+    fontWeight: '800',
   },
   tileHeaderRow: {
     flexDirection: 'row',
@@ -305,10 +315,6 @@ const styles = StyleSheet.create({
     lineHeight: 11.5,
     fontWeight: '700',
     flex: 1,
-  },
-  sideEdgeName: {
-    fontSize: 9.4,
-    lineHeight: 11,
   },
   cornerName: {
     fontSize: 11.2,
