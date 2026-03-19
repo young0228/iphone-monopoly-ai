@@ -33,10 +33,11 @@ const BOARD_SIZE = 11;
 const CORNER_INDEXES = new Set([0, 10, 20, 30]);
 
 // Larger perimeter proportions for portrait readability.
-const EDGE_WEIGHT = 2.25;
+const EDGE_ROW_WEIGHT = 2.1;
+const EDGE_COL_WEIGHT = 3.2;
 const INNER_WEIGHT = 1;
-const ROW_WEIGHTS = [EDGE_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, EDGE_WEIGHT];
-const COL_WEIGHTS = [EDGE_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, EDGE_WEIGHT];
+const ROW_WEIGHTS = [EDGE_ROW_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, EDGE_ROW_WEIGHT];
+const COL_WEIGHTS = [EDGE_COL_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, INNER_WEIGHT, EDGE_COL_WEIGHT];
 
 function total(weights) {
   return weights.reduce((sum, value) => sum + value, 0);
@@ -108,6 +109,7 @@ export default function Board({ players }) {
                 const tile = TILES[tileIndex];
                 const playersOnTile = players.filter((player) => player.position === tile.id);
                 const isCorner = CORNER_INDEXES.has(tileIndex);
+                const isSideEdge = col === 0 || col === BOARD_SIZE - 1;
                 const isProperty = tile.type === 'property';
                 const owner = ownerForTile(tile.id, players);
                 const groupColor = tile.colorGroup ? GROUP_COLORS[tile.colorGroup] : '#56648A';
@@ -119,6 +121,7 @@ export default function Board({ players }) {
                       styles.tile,
                       { flex: COL_WEIGHTS[col] },
                       isProperty ? styles.propertyTile : styles.nonPropertyTile,
+                      isSideEdge ? styles.sideEdgeTile : null,
                       isCorner ? styles.cornerTile : null,
                     ]}
                   >
@@ -130,9 +133,9 @@ export default function Board({ players }) {
                       </View>
                     )}
 
-                    <View style={styles.tileBody}>
+                    <View style={[styles.tileBody, isSideEdge ? styles.sideEdgeBody : null]}>
                       <View style={styles.tileHeaderRow}>
-                        <Text numberOfLines={3} style={[styles.tileName, isCorner ? styles.cornerName : null]}>
+                        <Text numberOfLines={2} style={[styles.tileName, isSideEdge ? styles.sideEdgeName : null, isCorner ? styles.cornerName : null]}>
                           {tile.name}
                         </Text>
                         {owner ? (
@@ -232,6 +235,9 @@ const styles = StyleSheet.create({
   nonPropertyTile: {
     backgroundColor: PALETTE.tileSpecial,
   },
+  sideEdgeTile: {
+    borderColor: '#5D75B5',
+  },
   cornerTile: {
     backgroundColor: PALETTE.tileCorner,
     borderWidth: 2,
@@ -269,6 +275,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 3,
   },
+  sideEdgeBody: {
+    paddingHorizontal: 7,
+  },
   tileHeaderRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -281,6 +290,10 @@ const styles = StyleSheet.create({
     lineHeight: 11.5,
     fontWeight: '700',
     flex: 1,
+  },
+  sideEdgeName: {
+    fontSize: 9.4,
+    lineHeight: 11,
   },
   cornerName: {
     fontSize: 11.2,
