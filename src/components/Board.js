@@ -51,11 +51,16 @@ const ROW_TOTAL = total(ROW_WEIGHTS);
 const COL_TOTAL = total(COL_WEIGHTS);
 
 // Center panel spans inner 9x9 area (rows/cols 1..9).
+const CENTER_LEFT = (sumRange(COL_WEIGHTS, 0, 1) / COL_TOTAL) * 100;
+const CENTER_TOP = (sumRange(ROW_WEIGHTS, 0, 1) / ROW_TOTAL) * 100;
+const CENTER_WIDTH = (sumRange(COL_WEIGHTS, 1, 10) / COL_TOTAL) * 100;
+const CENTER_HEIGHT = (sumRange(ROW_WEIGHTS, 1, 10) / ROW_TOTAL) * 100;
+const CENTER_INSET = 16;
 const CENTER_PANEL_STYLE = {
-  left: `${(sumRange(COL_WEIGHTS, 0, 1) / COL_TOTAL) * 100}%`,
-  top: `${(sumRange(ROW_WEIGHTS, 0, 1) / ROW_TOTAL) * 100}%`,
-  width: `${(sumRange(COL_WEIGHTS, 1, 10) / COL_TOTAL) * 100}%`,
-  height: `${(sumRange(ROW_WEIGHTS, 1, 10) / ROW_TOTAL) * 100}%`,
+  left: `${CENTER_LEFT + (CENTER_WIDTH * CENTER_INSET) / 100}%`,
+  top: `${CENTER_TOP + (CENTER_HEIGHT * CENTER_INSET) / 100}%`,
+  width: `${CENTER_WIDTH * (1 - (CENTER_INSET * 2) / 100)}%`,
+  height: `${CENTER_HEIGHT * (1 - (CENTER_INSET * 2) / 100)}%`,
 };
 
 function tileIndexAt(row, col) {
@@ -76,12 +81,22 @@ function specialIconForTile(tile) {
   return '•';
 }
 
+function displayTileName(tile, isSideEdge) {
+  if (!isSideEdge) return tile.name;
+  return tile.name
+    .replace('Avenue', 'Ave')
+    .replace('Railroad', 'RR')
+    .replace('Community Chest', 'Com Chest')
+    .replace('North Carolina', 'N. Carolina')
+    .replace('Pennsylvania', 'Penn');
+}
+
 function tokenSlotStyle(index) {
   const slots = [
-    { top: 1, left: 1 },
-    { top: 1, right: 1 },
-    { bottom: 1, left: 1 },
-    { bottom: 1, right: 1 },
+    { top: 6, left: 6 },
+    { top: 6, right: 6 },
+    { bottom: 6, left: 6 },
+    { bottom: 6, right: 6 },
   ];
   return slots[index] ?? slots[slots.length - 1];
 }
@@ -136,7 +151,7 @@ export default function Board({ players }) {
                     <View style={[styles.tileBody, isSideEdge ? styles.sideEdgeBody : null]}>
                       <View style={styles.tileHeaderRow}>
                         <Text numberOfLines={2} style={[styles.tileName, isSideEdge ? styles.sideEdgeName : null, isCorner ? styles.cornerName : null]}>
-                          {tile.name}
+                          {displayTileName(tile, isSideEdge)}
                         </Text>
                         {owner ? (
                           <View style={[styles.ownerRing, { borderColor: owner.color }]}>
@@ -355,18 +370,20 @@ const styles = StyleSheet.create({
   },
   tokenDock: {
     position: 'absolute',
-    right: 1,
-    bottom: 1,
-    width: 36,
-    height: 36,
+    left: '50%',
+    top: '56%',
+    width: 32,
+    height: 32,
+    marginLeft: -16,
+    marginTop: -16,
     zIndex: 20,
     elevation: 9,
   },
   tokenShell: {
     position: 'absolute',
-    width: 13,
-    height: 13,
-    borderRadius: 6.5,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
     borderWidth: 1.9,
     backgroundColor: '#0A142E',
     alignItems: 'center',
@@ -377,17 +394,17 @@ const styles = StyleSheet.create({
     shadowRadius: 1.8,
   },
   humanTokenShell: {
-    width: 15,
-    height: 15,
-    borderRadius: 7.5,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
     shadowColor: '#91BBFF',
     shadowOpacity: 0.95,
     shadowRadius: 4.4,
     shadowOffset: { width: 0, height: 0 },
   },
   tokenCore: {
-    width: 7.4,
-    height: 7.4,
-    borderRadius: 3.7,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
 });

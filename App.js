@@ -35,8 +35,9 @@ const HUMAN_TURN_PHASES = {
 export default function App() {
   const [players, setPlayers] = useState(createInitialPlayers);
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
-  const [statusMessage, setStatusMessage] = useState('Tap Roll Dice to begin.');
   const [lastRoll, setLastRoll] = useState(null);
+  const [latestActionLog, setLatestActionLog] = useState('Tap Roll Dice to begin.');
+  const [lastAiMoveLog, setLastAiMoveLog] = useState('No AI move yet.');
   const [humanTurnPhase, setHumanTurnPhase] = useState(HUMAN_TURN_PHASES.READY_TO_ROLL);
 
   const activePlayer = players[currentPlayerIndex];
@@ -70,17 +71,16 @@ export default function App() {
     const landing = resolveLanding(moved, currentPlayerIndex);
 
     setPlayers(landing.players);
-    setStatusMessage(`${activePlayer.name} rolled ${roll.total}. ${landing.message}`);
+    setLatestActionLog(`${activePlayer.name} rolled ${roll.total}. ${landing.message}`);
 
     if (landing.canBuy) {
       setHumanTurnPhase(HUMAN_TURN_PHASES.MUST_DECIDE_PROPERTY);
       return;
     }
 
-    // Future doubles behavior: if an extra roll is granted, keep only Roll Dice visible.
     if (roll.extraRollGranted) {
       setHumanTurnPhase(HUMAN_TURN_PHASES.READY_TO_ROLL);
-      setStatusMessage(`${activePlayer.name} rolled ${roll.total}. ${landing.message} Roll again for doubles.`);
+      setLatestActionLog(`${activePlayer.name} rolled ${roll.total}. ${landing.message} Roll again for doubles.`);
       return;
     }
 
@@ -94,7 +94,7 @@ export default function App() {
 
     const purchase = buyProperty(players, currentPlayerIndex);
     setPlayers(purchase.players);
-    setStatusMessage(purchase.message);
+    setLatestActionLog(purchase.message);
     setHumanTurnPhase(HUMAN_TURN_PHASES.READY_TO_END);
     goToNextPlayer();
   };
@@ -104,7 +104,7 @@ export default function App() {
       return;
     }
 
-    setStatusMessage(`${activePlayer.name} skipped buying ${activeTile.name}.`);
+    setLatestActionLog(`${activePlayer.name} skipped buying ${activeTile.name}.`);
     setHumanTurnPhase(HUMAN_TURN_PHASES.READY_TO_END);
     goToNextPlayer();
   };
@@ -113,6 +113,7 @@ export default function App() {
     if (activePlayer.isAI || humanTurnPhase !== HUMAN_TURN_PHASES.READY_TO_END) {
       return;
     }
+    setLatestActionLog(`${activePlayer.name} ended the turn.`);
     goToNextPlayer();
   };
 
@@ -122,9 +123,11 @@ export default function App() {
     }
 
     const result = runAiTurn(players, currentPlayerIndex);
+    const aiLog = `${activePlayer.name} rolled ${result.total}. ${result.message}`;
     setPlayers(result.players);
     setLastRoll(result.total);
-    setStatusMessage(`${activePlayer.name} rolled ${result.total}. ${result.message}`);
+    setLatestActionLog(aiLog);
+    setLastAiMoveLog(aiLog);
     goToNextPlayer();
   };
 
@@ -142,11 +145,10 @@ export default function App() {
           <Text style={styles.cardLabel}>Current Turn</Text>
           <Text style={styles.turnName}>{activePlayer.name}</Text>
           <View style={styles.statsRow}>
-            <Text style={styles.info}>Tile: {TILES[activePlayer.position].name}</Text>
+            <Text style={styles.info}>Tile: {activeTile.name}</Text>
             <Text style={styles.info}>Cash: ${activePlayer.cash}</Text>
           </View>
           <Text style={styles.info}>Last Roll: {lastRoll ?? '-'}</Text>
-          <Text style={styles.message}>{statusMessage}</Text>
           <Text style={styles.tileHint}>
             {activeTile.type !== 'property'
               ? `Special tile: ${activeTile.name} (not purchasable)`
@@ -154,6 +156,12 @@ export default function App() {
                 ? `${activeTile.name} is available to buy for $${activeTile.price}.`
                 : `Owned by ${activeTileOwner?.name ?? 'another player'}${activeTile.rent ? ` • Rent $${activeTile.rent}` : ''}.`}
           </Text>
+        </View>
+
+        <View style={styles.infoCard}>
+          <Text style={styles.cardLabel}>Action Log</Text>
+          <Text style={styles.message}>{latestActionLog}</Text>
+          <Text style={styles.aiLog}>Last AI Move: {lastAiMoveLog}</Text>
         </View>
 
         <View style={styles.buttonsWrap}>
@@ -260,10 +268,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   message: {
-    marginTop: 8,
-    color: UI.muted,
+    marginTop: 4,
+    color: '#DDE7FF',
     lineHeight: 18,
     fontSize: 13,
+  },
+  aiLog: {
+    marginTop: 4,
+    color: UI.muted,
+    lineHeight: 17,
+    fontSize: 12,
   },
   tileHint: {
     marginTop: 4,
