@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "Monopoly MVP",
+    "slug": "iphone-monopoly-ai",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.example.iphonemonopolyai"
+    }
+  }
+}
