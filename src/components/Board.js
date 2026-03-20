@@ -55,7 +55,7 @@ const CENTER_LEFT = (sumRange(COL_WEIGHTS, 0, 1) / COL_TOTAL) * 100;
 const CENTER_TOP = (sumRange(ROW_WEIGHTS, 0, 1) / ROW_TOTAL) * 100;
 const CENTER_WIDTH = (sumRange(COL_WEIGHTS, 1, 10) / COL_TOTAL) * 100;
 const CENTER_HEIGHT = (sumRange(ROW_WEIGHTS, 1, 10) / ROW_TOTAL) * 100;
-const CENTER_INSET = 30;
+const CENTER_INSET = 37;
 const CENTER_PANEL_STYLE = {
   left: `${CENTER_LEFT + (CENTER_WIDTH * CENTER_INSET) / 100}%`,
   top: `${CENTER_TOP + (CENTER_HEIGHT * CENTER_INSET) / 100}%`,
@@ -354,29 +354,29 @@ const styles = StyleSheet.create({
   },
   centerPanel: {
     position: 'absolute',
-    backgroundColor: PALETTE.centerPanel,
+    backgroundColor: 'rgba(22, 36, 74, 0.6)',
     borderWidth: 1,
-    borderColor: PALETTE.centerPanelBorder,
-    borderRadius: 16,
+    borderColor: 'rgba(49, 74, 131, 0.65)',
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.18,
+    shadowRadius: 4,
+    elevation: 3,
     zIndex: 2,
   },
   centerTitle: {
     color: '#E4EEFF',
-    fontSize: 15,
+    fontSize: 12,
     fontWeight: '800',
-    letterSpacing: 1.2,
+    letterSpacing: 0.9,
   },
   centerSubtitle: {
     color: '#97ABD9',
-    fontSize: 9.5,
-    marginTop: 2,
+    fontSize: 8,
+    marginTop: 1,
   },
   tokenDock: {
     position: 'absolute',

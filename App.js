@@ -133,6 +133,43 @@ export default function App() {
     goToNextPlayer();
   };
 
+  const renderTurnActions = () => {
+    if (!activePlayer.isAI && humanTurnPhase === HUMAN_TURN_PHASES.READY_TO_ROLL) {
+      return (
+        <TouchableOpacity style={[styles.buttonBase, styles.primaryButton]} onPress={handleHumanRoll}>
+          <Text style={styles.buttonText}>Roll Dice</Text>
+        </TouchableOpacity>
+      );
+    }
+
+    if (!activePlayer.isAI && humanTurnPhase === HUMAN_TURN_PHASES.MUST_DECIDE_PROPERTY) {
+      return (
+        <View style={styles.dualActionRow}>
+          <TouchableOpacity style={[styles.buttonBase, styles.buyButton, styles.flexButton]} onPress={handleBuy}>
+            <Text style={styles.buttonText}>Buy</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.buttonBase, styles.skipButton, styles.flexButton]} onPress={handleSkipBuy}>
+            <Text style={styles.buttonText}>Skip</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    if (!activePlayer.isAI && humanTurnPhase === HUMAN_TURN_PHASES.READY_TO_END) {
+      return (
+        <TouchableOpacity style={[styles.buttonBase, styles.primaryButton]} onPress={handleEndTurn}>
+          <Text style={styles.buttonText}>End Turn</Text>
+        </TouchableOpacity>
+      );
+    }
+
+    return (
+      <TouchableOpacity style={[styles.buttonBase, styles.primaryButton]} onPress={handleAiTurn}>
+        <Text style={styles.buttonText}>Run AI Turn</Text>
+      </TouchableOpacity>
+    );
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
@@ -146,69 +183,40 @@ export default function App() {
         </View>
 
         <View style={styles.bottomOverlay}>
-          <View style={styles.overlayTopRow}>
-            <View style={[styles.infoCard, styles.currentTurnCard]}>
+          <View style={styles.hudMainRow}>
+            <View style={styles.turnSection}>
               <Text style={styles.cardLabel}>Current Turn</Text>
               <Text style={styles.turnName}>{activePlayer.name}</Text>
-              <View style={styles.statsRow}>
-                <Text style={styles.info}>Tile: {activeTile.name}</Text>
-                <Text style={styles.info}>Cash: ${activePlayer.cash}</Text>
-              </View>
-              <Text style={styles.info}>Last Roll: {lastRoll ?? '-'}</Text>
-              <Text style={styles.tileHint}>
+              <Text style={styles.info}>Tile: {activeTile.name}</Text>
+              <Text style={styles.info}>Cash ${activePlayer.cash} • Roll {lastRoll ?? '-'}</Text>
+              <Text style={styles.tileHint} numberOfLines={2}>
                 {activeTile.type !== 'property'
-                  ? `Special tile: ${activeTile.name} (not purchasable)`
+                  ? `${activeTile.name} is a special tile`
                   : isPurchasableTile
-                    ? `${activeTile.name} is available to buy for $${activeTile.price}.`
-                    : `Owned by ${activeTileOwner?.name ?? 'another player'}${activeTile.rent ? ` • Rent $${activeTile.rent}` : ''}.`}
+                    ? `${activeTile.name} available for $${activeTile.price}`
+                    : `Owned by ${activeTileOwner?.name ?? 'another player'}${activeTile.rent ? ` • Rent $${activeTile.rent}` : ''}`}
+              </Text>
+              <View style={styles.turnActionWrap}>{renderTurnActions()}</View>
+            </View>
+
+            <View style={styles.logSection}>
+              <Text style={styles.cardLabel}>Latest Move</Text>
+              <Text style={styles.message} numberOfLines={3}>
+                {latestActionLog}
+              </Text>
+              <Text style={styles.aiLog} numberOfLines={2}>
+                AI: {lastAiMoveLog}
               </Text>
             </View>
-
-            <View style={[styles.infoCard, styles.logCard]}>
-              <Text style={styles.cardLabel}>Action Log</Text>
-              <Text style={styles.message}>{latestActionLog}</Text>
-              <Text style={styles.aiLog}>Last AI Move: {lastAiMoveLog}</Text>
-            </View>
           </View>
 
-          <View style={styles.buttonsWrap}>
-            {!activePlayer.isAI && humanTurnPhase === HUMAN_TURN_PHASES.READY_TO_ROLL && (
-              <TouchableOpacity style={[styles.buttonBase, styles.primaryButton]} onPress={handleHumanRoll}>
-                <Text style={styles.buttonText}>Roll Dice</Text>
-              </TouchableOpacity>
-            )}
-
-            {!activePlayer.isAI && humanTurnPhase === HUMAN_TURN_PHASES.MUST_DECIDE_PROPERTY && (
-              <>
-                <TouchableOpacity style={[styles.buttonBase, styles.buyButton]} onPress={handleBuy}>
-                  <Text style={styles.buttonText}>Buy Property</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.buttonBase, styles.skipButton]} onPress={handleSkipBuy}>
-                  <Text style={styles.buttonText}>Skip</Text>
-                </TouchableOpacity>
-              </>
-            )}
-
-            {!activePlayer.isAI && humanTurnPhase === HUMAN_TURN_PHASES.READY_TO_END && (
-              <TouchableOpacity style={[styles.buttonBase, styles.primaryButton]} onPress={handleEndTurn}>
-                <Text style={styles.buttonText}>End Turn</Text>
-              </TouchableOpacity>
-            )}
-
-            {activePlayer.isAI && (
-              <TouchableOpacity style={[styles.buttonBase, styles.primaryButton]} onPress={handleAiTurn}>
-                <Text style={styles.buttonText}>Run AI Turn</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-
-          <View style={[styles.infoCard, styles.playersCard]}>
-            <Text style={styles.cardLabel}>Players</Text>
+          <View style={styles.playersStrip}>
+            <Text style={[styles.cardLabel, styles.playersLabel]}>Players</Text>
             {sortedPlayers.map((player) => (
-              <View key={player.id} style={styles.playerRow}>
+              <View key={player.id} style={styles.playerChip}>
                 <View style={[styles.playerToken, { backgroundColor: player.color }]} />
-                <Text style={styles.info}>
-                  {player.name}: ${player.cash} · {player.properties.length} properties
+                <Text style={styles.playerChipText}>
+                  {player.name} ${player.cash} · {player.properties.length}
                 </Text>
               </View>
             ))}
@@ -261,36 +269,38 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(11, 18, 40, 0.96)',
     borderWidth: 1,
     borderColor: UI.border,
-    borderRadius: 16,
-    padding: 10,
-    gap: 8,
+    borderRadius: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    gap: 6,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.55,
     shadowRadius: 10,
     elevation: 14,
   },
-  overlayTopRow: {
+  hudMainRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 6,
+    alignItems: 'stretch',
   },
-  infoCard: {
+  turnSection: {
+    flex: 1.2,
     backgroundColor: UI.panel,
-    borderRadius: 12,
+    borderRadius: 11,
     borderWidth: 1,
     borderColor: UI.border,
-    padding: 10,
-    gap: 4,
+    padding: 8,
+    gap: 2,
   },
-  currentTurnCard: {
-    flex: 1.15,
-  },
-  logCard: {
-    flex: 0.85,
-  },
-  playersCard: {
-    paddingTop: 8,
-    paddingBottom: 8,
+  logSection: {
+    flex: 0.8,
+    backgroundColor: UI.panel,
+    borderRadius: 11,
+    borderWidth: 1,
+    borderColor: UI.border,
+    padding: 8,
+    gap: 2,
   },
   cardLabel: {
     color: UI.muted,
@@ -301,9 +311,9 @@ const styles = StyleSheet.create({
   },
   turnName: {
     color: UI.text,
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
-    marginBottom: 1,
+    marginBottom: 0,
   },
   statsRow: {
     flexDirection: 'row',
@@ -312,36 +322,43 @@ const styles = StyleSheet.create({
   },
   info: {
     color: UI.text,
-    fontSize: 12,
+    fontSize: 11,
   },
   message: {
     marginTop: 2,
     color: '#DDE7FF',
     lineHeight: 16,
-    fontSize: 12,
+    fontSize: 11.5,
   },
   aiLog: {
     marginTop: 2,
     color: UI.muted,
     lineHeight: 15,
-    fontSize: 11,
+    fontSize: 10.5,
   },
   tileHint: {
     marginTop: 2,
     color: '#D2DCFF',
-    fontSize: 11,
-    lineHeight: 14,
+    fontSize: 10.5,
+    lineHeight: 13,
   },
-  buttonsWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
+  turnActionWrap: {
+    marginTop: 4,
   },
   buttonBase: {
-    paddingVertical: 9,
-    paddingHorizontal: 13,
+    paddingVertical: 7,
+    paddingHorizontal: 10,
     borderRadius: 10,
     borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dualActionRow: {
+    flexDirection: 'row',
+    gap: 5,
+  },
+  flexButton: {
+    flex: 1,
   },
   primaryButton: {
     backgroundColor: UI.primary,
@@ -357,17 +374,36 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#FFFFFF',
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
   },
-  playerRow: {
+  playersStrip: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 4,
+  },
+  playersLabel: {
+    marginRight: 2,
+  },
+  playerChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 4,
+    borderWidth: 1,
+    borderColor: '#2C3A64',
+    backgroundColor: '#121C3D',
+    borderRadius: 999,
+    paddingVertical: 3,
+    paddingHorizontal: 7,
+  },
+  playerChipText: {
+    color: UI.text,
+    fontSize: 10.5,
   },
   playerToken: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
 });
