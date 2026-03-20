@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import Board from './src/components/Board';
 import { TILES } from './src/game/gameData';
 import {
@@ -33,6 +33,7 @@ const HUMAN_TURN_PHASES = {
 };
 
 export default function App() {
+  const { height: screenHeight } = useWindowDimensions();
   const [players, setPlayers] = useState(createInitialPlayers);
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
   const [lastRoll, setLastRoll] = useState(null);
@@ -49,6 +50,7 @@ export default function App() {
     () => [...players].sort((a, b) => (a.isAI === b.isAI ? 0 : a.isAI ? 1 : -1)),
     [players],
   );
+  const boardHeight = Math.round(screenHeight * 0.7);
 
   const goToNextPlayer = () => {
     setCurrentPlayerIndex((prev) => {
@@ -133,81 +135,86 @@ export default function App() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.container}>
+      <View style={styles.container}>
         <View style={styles.heroCard}>
           <Text style={styles.title}>Monopoly MVP</Text>
           <Text style={styles.subtitle}>Single Player • 3 AI Opponents</Text>
         </View>
 
-        <Board players={players} activePosition={activePlayer.position} />
-
-        <View style={styles.infoCard}>
-          <Text style={styles.cardLabel}>Current Turn</Text>
-          <Text style={styles.turnName}>{activePlayer.name}</Text>
-          <View style={styles.statsRow}>
-            <Text style={styles.info}>Tile: {activeTile.name}</Text>
-            <Text style={styles.info}>Cash: ${activePlayer.cash}</Text>
-          </View>
-          <Text style={styles.info}>Last Roll: {lastRoll ?? '-'}</Text>
-          <Text style={styles.tileHint}>
-            {activeTile.type !== 'property'
-              ? `Special tile: ${activeTile.name} (not purchasable)`
-              : isPurchasableTile
-                ? `${activeTile.name} is available to buy for $${activeTile.price}.`
-                : `Owned by ${activeTileOwner?.name ?? 'another player'}${activeTile.rent ? ` • Rent $${activeTile.rent}` : ''}.`}
-          </Text>
-          <Text style={styles.tileDetailNote}>Full tile details are shown here for the active tile.</Text>
+        <View style={[styles.boardStage, { minHeight: boardHeight }]}>
+          <Board players={players} activePosition={activePlayer.position} />
         </View>
 
-        <View style={styles.infoCard}>
-          <Text style={styles.cardLabel}>Action Log</Text>
-          <Text style={styles.message}>{latestActionLog}</Text>
-          <Text style={styles.aiLog}>Last AI Move: {lastAiMoveLog}</Text>
-        </View>
-
-        <View style={styles.buttonsWrap}>
-          {!activePlayer.isAI && humanTurnPhase === HUMAN_TURN_PHASES.READY_TO_ROLL && (
-            <TouchableOpacity style={[styles.buttonBase, styles.primaryButton]} onPress={handleHumanRoll}>
-              <Text style={styles.buttonText}>Roll Dice</Text>
-            </TouchableOpacity>
-          )}
-
-          {!activePlayer.isAI && humanTurnPhase === HUMAN_TURN_PHASES.MUST_DECIDE_PROPERTY && (
-            <>
-              <TouchableOpacity style={[styles.buttonBase, styles.buyButton]} onPress={handleBuy}>
-                <Text style={styles.buttonText}>Buy Property</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.buttonBase, styles.skipButton]} onPress={handleSkipBuy}>
-                <Text style={styles.buttonText}>Skip</Text>
-              </TouchableOpacity>
-            </>
-          )}
-
-          {!activePlayer.isAI && humanTurnPhase === HUMAN_TURN_PHASES.READY_TO_END && (
-            <TouchableOpacity style={[styles.buttonBase, styles.primaryButton]} onPress={handleEndTurn}>
-              <Text style={styles.buttonText}>End Turn</Text>
-            </TouchableOpacity>
-          )}
-
-          {activePlayer.isAI && (
-            <TouchableOpacity style={[styles.buttonBase, styles.primaryButton]} onPress={handleAiTurn}>
-              <Text style={styles.buttonText}>Run AI Turn</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-
-        <View style={styles.infoCard}>
-          <Text style={styles.cardLabel}>Players</Text>
-          {sortedPlayers.map((player) => (
-            <View key={player.id} style={styles.playerRow}>
-              <View style={[styles.playerToken, { backgroundColor: player.color }]} />
-              <Text style={styles.info}>
-                {player.name}: ${player.cash} · {player.properties.length} properties
+        <View style={styles.bottomOverlay}>
+          <View style={styles.overlayTopRow}>
+            <View style={[styles.infoCard, styles.currentTurnCard]}>
+              <Text style={styles.cardLabel}>Current Turn</Text>
+              <Text style={styles.turnName}>{activePlayer.name}</Text>
+              <View style={styles.statsRow}>
+                <Text style={styles.info}>Tile: {activeTile.name}</Text>
+                <Text style={styles.info}>Cash: ${activePlayer.cash}</Text>
+              </View>
+              <Text style={styles.info}>Last Roll: {lastRoll ?? '-'}</Text>
+              <Text style={styles.tileHint}>
+                {activeTile.type !== 'property'
+                  ? `Special tile: ${activeTile.name} (not purchasable)`
+                  : isPurchasableTile
+                    ? `${activeTile.name} is available to buy for $${activeTile.price}.`
+                    : `Owned by ${activeTileOwner?.name ?? 'another player'}${activeTile.rent ? ` • Rent $${activeTile.rent}` : ''}.`}
               </Text>
             </View>
-          ))}
+
+            <View style={[styles.infoCard, styles.logCard]}>
+              <Text style={styles.cardLabel}>Action Log</Text>
+              <Text style={styles.message}>{latestActionLog}</Text>
+              <Text style={styles.aiLog}>Last AI Move: {lastAiMoveLog}</Text>
+            </View>
+          </View>
+
+          <View style={styles.buttonsWrap}>
+            {!activePlayer.isAI && humanTurnPhase === HUMAN_TURN_PHASES.READY_TO_ROLL && (
+              <TouchableOpacity style={[styles.buttonBase, styles.primaryButton]} onPress={handleHumanRoll}>
+                <Text style={styles.buttonText}>Roll Dice</Text>
+              </TouchableOpacity>
+            )}
+
+            {!activePlayer.isAI && humanTurnPhase === HUMAN_TURN_PHASES.MUST_DECIDE_PROPERTY && (
+              <>
+                <TouchableOpacity style={[styles.buttonBase, styles.buyButton]} onPress={handleBuy}>
+                  <Text style={styles.buttonText}>Buy Property</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.buttonBase, styles.skipButton]} onPress={handleSkipBuy}>
+                  <Text style={styles.buttonText}>Skip</Text>
+                </TouchableOpacity>
+              </>
+            )}
+
+            {!activePlayer.isAI && humanTurnPhase === HUMAN_TURN_PHASES.READY_TO_END && (
+              <TouchableOpacity style={[styles.buttonBase, styles.primaryButton]} onPress={handleEndTurn}>
+                <Text style={styles.buttonText}>End Turn</Text>
+              </TouchableOpacity>
+            )}
+
+            {activePlayer.isAI && (
+              <TouchableOpacity style={[styles.buttonBase, styles.primaryButton]} onPress={handleAiTurn}>
+                <Text style={styles.buttonText}>Run AI Turn</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          <View style={[styles.infoCard, styles.playersCard]}>
+            <Text style={styles.cardLabel}>Players</Text>
+            {sortedPlayers.map((player) => (
+              <View key={player.id} style={styles.playerRow}>
+                <View style={[styles.playerToken, { backgroundColor: player.color }]} />
+                <Text style={styles.info}>
+                  {player.name}: ${player.cash} · {player.properties.length} properties
+                </Text>
+              </View>
+            ))}
+          </View>
         </View>
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -218,33 +225,72 @@ const styles = StyleSheet.create({
     backgroundColor: UI.bg,
   },
   container: {
-    padding: 16,
-    gap: 14,
+    flex: 1,
+    paddingHorizontal: 10,
+    paddingTop: 6,
+    paddingBottom: 6,
   },
   heroCard: {
     backgroundColor: UI.panelAlt,
-    borderRadius: 18,
-    padding: 14,
+    borderRadius: 14,
+    paddingVertical: 9,
+    paddingHorizontal: 12,
     borderWidth: 1,
     borderColor: UI.border,
+    marginBottom: 6,
   },
   title: {
     color: UI.text,
-    fontSize: 30,
+    fontSize: 24,
     fontWeight: '800',
   },
   subtitle: {
     color: UI.muted,
-    fontSize: 13,
+    fontSize: 12,
     marginTop: 2,
+  },
+  boardStage: {
+    flex: 1,
+    marginBottom: 6,
+  },
+  bottomOverlay: {
+    position: 'absolute',
+    left: 10,
+    right: 10,
+    bottom: 6,
+    backgroundColor: 'rgba(11, 18, 40, 0.96)',
+    borderWidth: 1,
+    borderColor: UI.border,
+    borderRadius: 16,
+    padding: 10,
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.55,
+    shadowRadius: 10,
+    elevation: 14,
+  },
+  overlayTopRow: {
+    flexDirection: 'row',
+    gap: 8,
   },
   infoCard: {
     backgroundColor: UI.panel,
-    borderRadius: 16,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: UI.border,
-    padding: 14,
-    gap: 5,
+    padding: 10,
+    gap: 4,
+  },
+  currentTurnCard: {
+    flex: 1.15,
+  },
+  logCard: {
+    flex: 0.85,
+  },
+  playersCard: {
+    paddingTop: 8,
+    paddingBottom: 8,
   },
   cardLabel: {
     color: UI.muted,
@@ -255,9 +301,9 @@ const styles = StyleSheet.create({
   },
   turnName: {
     color: UI.text,
-    fontSize: 21,
+    fontSize: 18,
     fontWeight: '700',
-    marginBottom: 2,
+    marginBottom: 1,
   },
   statsRow: {
     flexDirection: 'row',
@@ -266,40 +312,35 @@ const styles = StyleSheet.create({
   },
   info: {
     color: UI.text,
-    fontSize: 14,
+    fontSize: 12,
   },
   message: {
-    marginTop: 4,
+    marginTop: 2,
     color: '#DDE7FF',
-    lineHeight: 18,
-    fontSize: 13,
+    lineHeight: 16,
+    fontSize: 12,
   },
   aiLog: {
-    marginTop: 4,
+    marginTop: 2,
     color: UI.muted,
-    lineHeight: 17,
-    fontSize: 12,
+    lineHeight: 15,
+    fontSize: 11,
   },
   tileHint: {
-    marginTop: 4,
+    marginTop: 2,
     color: '#D2DCFF',
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  tileDetailNote: {
-    marginTop: 4,
-    color: '#9DB0E6',
     fontSize: 11,
+    lineHeight: 14,
   },
   buttonsWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 6,
   },
   buttonBase: {
-    paddingVertical: 11,
-    paddingHorizontal: 16,
-    borderRadius: 12,
+    paddingVertical: 9,
+    paddingHorizontal: 13,
+    borderRadius: 10,
     borderWidth: 1,
   },
   primaryButton: {
@@ -316,13 +357,13 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
   },
   playerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   playerToken: {
     width: 10,
