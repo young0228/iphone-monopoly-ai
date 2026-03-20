@@ -55,7 +55,7 @@ const CENTER_LEFT = (sumRange(COL_WEIGHTS, 0, 1) / COL_TOTAL) * 100;
 const CENTER_TOP = (sumRange(ROW_WEIGHTS, 0, 1) / ROW_TOTAL) * 100;
 const CENTER_WIDTH = (sumRange(COL_WEIGHTS, 1, 10) / COL_TOTAL) * 100;
 const CENTER_HEIGHT = (sumRange(ROW_WEIGHTS, 1, 10) / ROW_TOTAL) * 100;
-const CENTER_INSET = 37;
+const CENTER_INSET = 42;
 const CENTER_PANEL_STYLE = {
   left: `${CENTER_LEFT + (CENTER_WIDTH * CENTER_INSET) / 100}%`,
   top: `${CENTER_TOP + (CENTER_HEIGHT * CENTER_INSET) / 100}%`,
@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
   },
   board: {
     flex: 1,
-    borderRadius: 12,
+    borderRadius: 10,
     overflow: 'hidden',
     borderWidth: 2,
     borderColor: PALETTE.border,
@@ -361,22 +361,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.18,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 2.6,
+    elevation: 2,
     zIndex: 2,
   },
   centerTitle: {
     color: '#E4EEFF',
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '800',
-    letterSpacing: 0.9,
+    letterSpacing: 0.6,
   },
   centerSubtitle: {
     color: '#97ABD9',
-    fontSize: 8,
-    marginTop: 1,
+    fontSize: 7,
+    marginTop: 0,
   },
   tokenDock: {
     position: 'absolute',

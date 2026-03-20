@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import Board from './src/components/Board';
 import { TILES } from './src/game/gameData';
 import {
@@ -50,7 +50,7 @@ export default function App() {
     () => [...players].sort((a, b) => (a.isAI === b.isAI ? 0 : a.isAI ? 1 : -1)),
     [players],
   );
-  const boardHeight = Math.round(screenHeight * 0.7);
+  const boardHeight = Math.round(screenHeight * 0.76);
 
   const goToNextPlayer = () => {
     setCurrentPlayerIndex((prev) => {
@@ -178,7 +178,7 @@ export default function App() {
           <Text style={styles.subtitle}>Single Player • 3 AI Opponents</Text>
         </View>
 
-        <View style={[styles.boardStage, { minHeight: boardHeight }]}>
+        <View style={[styles.boardStage, { height: boardHeight }]}>
           <Board players={players} activePosition={activePlayer.position} />
         </View>
 
@@ -189,7 +189,7 @@ export default function App() {
               <Text style={styles.turnName}>{activePlayer.name}</Text>
               <Text style={styles.info}>Tile: {activeTile.name}</Text>
               <Text style={styles.info}>Cash ${activePlayer.cash} • Roll {lastRoll ?? '-'}</Text>
-              <Text style={styles.tileHint} numberOfLines={2}>
+              <Text style={styles.tileHint} numberOfLines={1}>
                 {activeTile.type !== 'property'
                   ? `${activeTile.name} is a special tile`
                   : isPurchasableTile
@@ -201,16 +201,16 @@ export default function App() {
 
             <View style={styles.logSection}>
               <Text style={styles.cardLabel}>Latest Move</Text>
-              <Text style={styles.message} numberOfLines={3}>
+              <Text style={styles.message} numberOfLines={2}>
                 {latestActionLog}
               </Text>
-              <Text style={styles.aiLog} numberOfLines={2}>
+              <Text style={styles.aiLog} numberOfLines={1}>
                 AI: {lastAiMoveLog}
               </Text>
             </View>
           </View>
 
-          <View style={styles.playersStrip}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.playersStrip}>
             <Text style={[styles.cardLabel, styles.playersLabel]}>Players</Text>
             {sortedPlayers.map((player) => (
               <View key={player.id} style={styles.playerChip}>
@@ -220,7 +220,7 @@ export default function App() {
                 </Text>
               </View>
             ))}
-          </View>
+          </ScrollView>
         </View>
       </View>
     </SafeAreaView>
@@ -234,84 +234,85 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    paddingHorizontal: 10,
-    paddingTop: 6,
-    paddingBottom: 6,
+    paddingHorizontal: 8,
+    paddingTop: 4,
+    paddingBottom: 4,
   },
   heroCard: {
     backgroundColor: UI.panelAlt,
-    borderRadius: 14,
-    paddingVertical: 9,
-    paddingHorizontal: 12,
+    borderRadius: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
     borderWidth: 1,
     borderColor: UI.border,
-    marginBottom: 6,
+    marginBottom: 4,
   },
   title: {
     color: UI.text,
-    fontSize: 24,
+    fontSize: 21,
     fontWeight: '800',
   },
   subtitle: {
     color: UI.muted,
-    fontSize: 12,
-    marginTop: 2,
+    fontSize: 11,
+    marginTop: 1,
   },
   boardStage: {
-    flex: 1,
-    marginBottom: 6,
+    marginBottom: 2,
   },
   bottomOverlay: {
     position: 'absolute',
-    left: 10,
-    right: 10,
-    bottom: 6,
+    left: 8,
+    right: 8,
+    bottom: 4,
     backgroundColor: 'rgba(11, 18, 40, 0.96)',
     borderWidth: 1,
     borderColor: UI.border,
-    borderRadius: 14,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    gap: 6,
+    borderRadius: 12,
+    paddingHorizontal: 7,
+    paddingVertical: 6,
+    gap: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.55,
-    shadowRadius: 10,
-    elevation: 14,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.45,
+    shadowRadius: 8,
+    elevation: 10,
   },
   hudMainRow: {
     flexDirection: 'row',
-    gap: 6,
+    gap: 4,
     alignItems: 'stretch',
   },
   turnSection: {
     flex: 1.2,
     backgroundColor: UI.panel,
-    borderRadius: 11,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: UI.border,
-    padding: 8,
-    gap: 2,
+    paddingHorizontal: 6,
+    paddingVertical: 5,
+    gap: 1,
   },
   logSection: {
     flex: 0.8,
     backgroundColor: UI.panel,
-    borderRadius: 11,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: UI.border,
-    padding: 8,
-    gap: 2,
+    paddingHorizontal: 6,
+    paddingVertical: 5,
+    gap: 1,
   },
   cardLabel: {
     color: UI.muted,
     fontWeight: '700',
-    fontSize: 12,
-    letterSpacing: 1,
+    fontSize: 10,
+    letterSpacing: 0.6,
     textTransform: 'uppercase',
   },
   turnName: {
     color: UI.text,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '700',
     marginBottom: 0,
   },
@@ -322,40 +323,40 @@ const styles = StyleSheet.create({
   },
   info: {
     color: UI.text,
-    fontSize: 11,
+    fontSize: 10,
   },
   message: {
     marginTop: 2,
     color: '#DDE7FF',
-    lineHeight: 16,
-    fontSize: 11.5,
+    lineHeight: 13,
+    fontSize: 10,
   },
   aiLog: {
-    marginTop: 2,
+    marginTop: 1,
     color: UI.muted,
-    lineHeight: 15,
-    fontSize: 10.5,
+    lineHeight: 12,
+    fontSize: 9.5,
   },
   tileHint: {
-    marginTop: 2,
+    marginTop: 1,
     color: '#D2DCFF',
-    fontSize: 10.5,
-    lineHeight: 13,
+    fontSize: 9.5,
+    lineHeight: 11,
   },
   turnActionWrap: {
-    marginTop: 4,
+    marginTop: 3,
   },
   buttonBase: {
-    paddingVertical: 7,
-    paddingHorizontal: 10,
-    borderRadius: 10,
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    borderRadius: 8,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   dualActionRow: {
     flexDirection: 'row',
-    gap: 5,
+    gap: 4,
   },
   flexButton: {
     flex: 1,
@@ -374,14 +375,14 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 10.5,
     fontWeight: '700',
   },
   playersStrip: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     alignItems: 'center',
-    gap: 4,
+    gap: 3,
+    paddingRight: 4,
   },
   playersLabel: {
     marginRight: 2,
@@ -389,21 +390,21 @@ const styles = StyleSheet.create({
   playerChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 3,
     borderWidth: 1,
     borderColor: '#2C3A64',
     backgroundColor: '#121C3D',
     borderRadius: 999,
-    paddingVertical: 3,
-    paddingHorizontal: 7,
+    paddingVertical: 2,
+    paddingHorizontal: 6,
   },
   playerChipText: {
     color: UI.text,
-    fontSize: 10.5,
+    fontSize: 9.5,
   },
   playerToken: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
   },
 });
