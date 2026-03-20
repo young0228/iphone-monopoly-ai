@@ -91,6 +91,10 @@ function tokenSlotStyle(index) {
   return slots[index] ?? slots[slots.length - 1];
 }
 
+function displayTileName(tile) {
+  return tile.name;
+}
+
 export default function Board({ players, activePosition }) {
   return (
     <View style={styles.perspectiveShell}>
